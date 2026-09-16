@@ -10,6 +10,14 @@ Local, private PNG → WebP converter with **Cloudinary-style smart encoding**: 
 - ⬇️ Per-file download + Download All (individual files, no zip)
 - 🔒 100% offline after load — zero dependencies, single HTML file
 
+## Requirements
+
+None. No installation, no dependencies, no build step, no internet needed.
+
+- Any modern browser (Chrome, Edge, Firefox, Safari — 2020 or newer) with WebP support. That's it.
+- Copy `index.html` to any machine and double-click it.
+- Optional: serve over HTTP with `python -m http.server` (only if you prefer a URL instead of opening the file directly — any static file server works).
+
 ## Use
 
 Double-click `index.html`, or serve locally:
