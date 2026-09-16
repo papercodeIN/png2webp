@@ -86,6 +86,21 @@
     margin-top: 18px; background: #052e16; border: 1px solid #166534;
     padding: 14px 16px; border-radius: 12px; font-size: 14px; display: none;
   }
+  #pathsSection {
+    margin-top: 14px; background: #0b1220; border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; font-size: 14px; display: none;
+  }
+  #pathsSection .paths-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; margin-bottom: 8px;
+  }
+  #pathsSection h3 { margin: 0; font-size: 14px; }
+  #pathsList {
+    margin: 0; white-space: pre-wrap; word-break: break-all;
+    color: #a5f3fc; font-size: 13px; font-family: Consolas, monospace;
+  }
+  .btn-copy { background: #334155; color: var(--text); padding: 8px 14px; font-size: 13px; }
+  .btn-copy:hover { background: #475569; }
   footer { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
   code { background: #0b1220; padding: 2px 6px; border-radius: 6px; }
 </style>
@@ -116,6 +131,13 @@
 
   <div id="fileList"></div>
   <div id="summary"></div>
+  <div id="pathsSection">
+    <div class="paths-head">
+      <h3>Output paths</h3>
+      <button class="btn-copy" id="copyPathsBtn">Copy</button>
+    </div>
+    <pre id="pathsList"></pre>
+  </div>
 
   <footer>Tip: run locally by double-clicking this file, or with <code>python -m http.server</code>. Nothing leaves your computer.</footer>
 </div>
@@ -127,6 +149,9 @@ const fileList = document.getElementById('fileList');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const clearBtn = document.getElementById('clearBtn');
 const summary = document.getElementById('summary');
+const pathsSection = document.getElementById('pathsSection');
+const pathsList = document.getElementById('pathsList');
+const copyPathsBtn = document.getElementById('copyPathsBtn');
 
 const WEBP_QUALITY = 1.0; // fallback only — smart encode picks per-file quality below
 // Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
@@ -356,13 +381,39 @@ function updateButtons() {
 
 function updateSummary() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { summary.style.display = 'none'; return; }
+  if (!done.length) { summary.style.display = 'none'; pathsSection.style.display = 'none'; return; }
   const tO = done.reduce((a, i) => a + i.origSize, 0);
   const tW = done.reduce((a, i) => a + i.webpSize, 0);
   const pct = Math.round((1 - tW / tO) * 100);
   summary.style.display = 'block';
   summary.innerHTML = `✅ <b>${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${pct}% smaller</b>`;
+  updatePaths();
 }
+
+// Output paths in /uploads/filename format
+function updatePaths() {
+  const done = items.filter(i => i.status === 'done');
+  if (!done.length) { pathsSection.style.display = 'none'; return; }
+  pathsSection.style.display = 'block';
+  pathsList.textContent = done.map(i => '/uploads/' + i.newName).join('\n');
+}
+
+copyPathsBtn.addEventListener('click', async () => {
+  const text = pathsList.textContent;
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  copyPathsBtn.textContent = 'Copied!';
+  setTimeout(() => { copyPathsBtn.textContent = 'Copy'; }, 1500);
+});
 
 downloadAllBtn.addEventListener('click', async () => {
   const done = items.filter(i => i.status === 'done');
