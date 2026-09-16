@@ -6,7 +6,7 @@ Local, private PNG → WebP converter with **Cloudinary-style smart encoding**: 
 
 - 🖼️ Multiple PNG upload (click or drag & drop)
 - 🧠 Smart encode — tries qualities 75→93, keeps the smallest file scoring **PSNR ≥ 40 dB** against the original; falls back to quality 100 if needed
-- ✏️ Auto-rename: `My Photo 1.png` → `My_Photo_1.webp` (spaces → underscores, unsafe chars sanitized)
+- ✏️ Auto-rename: `My Photo-1.png` → `My_Photo_1.webp` (spaces & dashes → underscores, unsafe chars sanitized)
 - ⬇️ Per-file download + Download All (individual files, no zip)
 - 🔒 100% offline after load — zero dependencies, single HTML file
 

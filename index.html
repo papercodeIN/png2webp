@@ -94,7 +94,7 @@
 <div class="container">
   <span class="badge">100% LOCAL · NO UPLOAD · PRIVATE</span>
   <h1>PNG → WebP Converter</h1>
-  <p class="sub">Select multiple PNG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code>spaces → underscores</code>.</p>
+  <p class="sub">Select multiple PNG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code>spaces/dashes → underscores</code>.</p>
 
   <div id="dropzone" title="Click or drop files">
     <div class="big">📁 Drag &amp; drop PNG files here</div>
@@ -105,7 +105,7 @@
   <div class="settings">
     <div style="font-size:14px">🧠 <b>Smart encode</b> — tries qualities 75 → 93 and keeps the <b>smallest file</b> proven visually lossless (PSNR ≥ 40 dB, measured against your original). Falls back to 100 only if needed.</div>
     <div style="font-size:13px;color:var(--muted);max-width:420px">
-      Rename rule: <code>My Photo 1.png</code> → <code>My_Photo_1.webp</code>
+      Rename rule: <code>My Photo-1.png</code> → <code>My_Photo_1.webp</code>
     </div>
   </div>
 
@@ -136,11 +136,12 @@ const PSNR_SAMPLE_MAX = 2000000; // compare on a downscaled copy (≤2MP) to kee
 
 let items = []; // { id, origName, newName, origSize, webpBlob, webpSize, url, status }
 
-// Rename: "my photo 1.png" -> "my_photo_1.webp"
+// Rename: "my photo-1.png" -> "my_photo_1.webp" (spaces & dashes -> underscores)
 function toWebpName(origName) {
   let base = origName.replace(/\.[^.]+$/, ''); // strip extension
   base = base.trim().replace(/\s+/g, '_');     // spaces -> underscore
-  base = base.replace(/[^a-zA-Z0-9_\-]/g, '_') // sanitize unsafe chars
+  base = base.replace(/-+/g, '_')              // dashes -> underscore
+             .replace(/[^a-zA-Z0-9_]/g, '_')   // sanitize unsafe chars
              .replace(/_+/g, '_')              // collapse __
              .replace(/^_+|_+$/g, '');         // trim edge underscores
   if (!base) base = 'converted_image';
