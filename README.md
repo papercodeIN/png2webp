@@ -1,4 +1,4 @@
-# png2webp-smart
+# png2webp
 
 Local, private PNG → WebP converter with **Cloudinary-style smart encoding**: smallest file at visually-lossless quality. No server, no upload — everything runs in your browser.
 
