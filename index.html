@@ -83,11 +83,14 @@
   .status.done { color: #4ade80; }
   .status.error { color: #f87171; }
   #summary {
-    margin-top: 18px; background: #052e16; border: 1px solid #166534;
+    background: #052e16; border: 1px solid #166534;
     padding: 14px 16px; border-radius: 12px; font-size: 14px; display: none;
   }
+  .result-row { display: none; gap: 14px; align-items: flex-start; margin-top: 18px; }
+  .result-row > div { flex: 1; min-width: 0; }
+  @media (max-width: 640px) { .result-row { flex-direction: column; } }
   #pathsSection {
-    margin-top: 14px; background: #0b1220; border: 1px solid var(--border);
+    background: #0b1220; border: 1px solid var(--border);
     border-radius: 12px; padding: 14px 16px; font-size: 14px; display: none;
   }
   #pathsSection .paths-head {
@@ -130,13 +133,15 @@
   </div>
 
   <div id="fileList"></div>
-  <div id="summary"></div>
-  <div id="pathsSection">
-    <div class="paths-head">
-      <h3>Output paths</h3>
-      <button class="btn-copy" id="copyPathsBtn">Copy</button>
+  <div class="result-row">
+    <div id="summary"></div>
+    <div id="pathsSection">
+      <div class="paths-head">
+        <h3>Output paths</h3>
+        <button class="btn-copy" id="copyPathsBtn">Copy</button>
+      </div>
+      <pre id="pathsList"></pre>
     </div>
-    <pre id="pathsList"></pre>
   </div>
 
   <footer>Tip: run locally by double-clicking this file, or with <code>python -m http.server</code>. Nothing leaves your computer.</footer>
@@ -152,6 +157,7 @@ const summary = document.getElementById('summary');
 const pathsSection = document.getElementById('pathsSection');
 const pathsList = document.getElementById('pathsList');
 const copyPathsBtn = document.getElementById('copyPathsBtn');
+const resultRow = document.querySelector('.result-row');
 
 const WEBP_QUALITY = 1.0; // fallback only — smart encode picks per-file quality below
 // Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
@@ -381,12 +387,13 @@ function updateButtons() {
 
 function updateSummary() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { summary.style.display = 'none'; pathsSection.style.display = 'none'; return; }
+  if (!done.length) { summary.style.display = 'none'; pathsSection.style.display = 'none'; resultRow.style.display = 'none'; return; }
   const tO = done.reduce((a, i) => a + i.origSize, 0);
   const tW = done.reduce((a, i) => a + i.webpSize, 0);
   const pct = Math.round((1 - tW / tO) * 100);
   summary.style.display = 'block';
   summary.innerHTML = `✅ <b>${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${pct}% smaller</b>`;
+  resultRow.style.display = 'flex';
   updatePaths();
 }
 
