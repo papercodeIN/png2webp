@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PNG → WebP Converter (Local)</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #22c55e;
+    --accent2: #3b82f6;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { margin: 0 0 6px; font-size: 28px; }
+  p.sub { color: var(--muted); margin: 0 0 24px; }
+  .badge {
+    display: inline-block; background: #14532d; color: #bbf7d0;
+    font-size: 12px; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px;
+  }
+  #dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  #dropzone:hover, #dropzone.dragover {
+    border-color: var(--accent);
+    background: #172554;
+  }
+  #dropzone .big { font-size: 18px; font-weight: 600; }
+  #dropzone .small { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  button {
+    border: 0; border-radius: 10px; padding: 12px 18px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #052e16; }
+  .btn-primary:hover { background: #16a34a; color: #fff; }
+  .btn-secondary { background: #334155; color: var(--text); }
+  .btn-secondary:hover { background: #475569; }
+  .btn-dl { background: var(--accent2); color: #fff; padding: 8px 14px; font-size: 13px; }
+  .btn-dl:hover { background: #2563eb; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .settings {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px; margin-top: 18px;
+    display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+  }
+  .settings label { font-size: 14px; color: var(--muted); }
+  .settings output { font-weight: 700; color: var(--text); }
+  #fileList { margin-top: 20px; display: grid; gap: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px;
+    display: grid; grid-template-columns: 72px 1fr auto;
+    gap: 14px; align-items: center;
+  }
+  .card img {
+    width: 72px; height: 72px; object-fit: contain;
+    background: #0b1220; border-radius: 10px; border: 1px solid var(--border);
+  }
+  .name { font-weight: 600; font-size: 14px; word-break: break-all; }
+  .name .arrow { color: var(--accent); }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .meta .save { color: #4ade80; font-weight: 700; }
+  .status { font-size: 12px; margin-top: 4px; }
+  .status.converting { color: #facc15; }
+  .status.done { color: #4ade80; }
+  .status.error { color: #f87171; }
+  #summary {
+    margin-top: 18px; background: #052e16; border: 1px solid #166534;
+    padding: 14px 16px; border-radius: 12px; font-size: 14px; display: none;
+  }
+  footer { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
+  code { background: #0b1220; padding: 2px 6px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <span class="badge">100% LOCAL · NO UPLOAD · PRIVATE</span>
+  <h1>PNG → WebP Converter</h1>
+  <p class="sub">Select multiple PNG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code>spaces → underscores</code>.</p>
+
+  <div id="dropzone" title="Click or drop files">
+    <div class="big">📁 Drag &amp; drop PNG files here</div>
+    <div class="small">or click to browse · multiple files supported · stays on your machine</div>
+    <input type="file" id="fileInput" accept=".png,image/png" multiple hidden />
+  </div>
+
+  <div class="settings">
+    <div style="font-size:14px">🧠 <b>Smart encode</b> — tries qualities 75 → 93 and keeps the <b>smallest file</b> proven visually lossless (PSNR ≥ 40 dB, measured against your original). Falls back to 100 only if needed.</div>
+    <div style="font-size:13px;color:var(--muted);max-width:420px">
+      Rename rule: <code>My Photo 1.png</code> → <code>My_Photo_1.webp</code>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" id="downloadAllBtn" disabled>⬇ Download All</button>
+    <button class="btn-secondary" id="clearBtn" disabled>Clear</button>
+  </div>
+
+  <div id="fileList"></div>
+  <div id="summary"></div>
+
+  <footer>Tip: run locally by double-clicking this file, or with <code>python -m http.server</code>. Nothing leaves your computer.</footer>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const clearBtn = document.getElementById('clearBtn');
+const summary = document.getElementById('summary');
+
+const WEBP_QUALITY = 1.0; // fallback only — smart encode picks per-file quality below
+// Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
+const SMART_QUALITIES = [0.75, 0.8, 0.85, 0.9, 0.93]; // tried low → high, first PSNR pass wins (smallest file)
+const PSNR_THRESHOLD_DB = 40;   // >= 40 dB ≈ visually lossless
+const PSNR_SAMPLE_MAX = 2000000; // compare on a downscaled copy (≤2MP) to keep it fast
+
+let items = []; // { id, origName, newName, origSize, webpBlob, webpSize, url, status }
+
+// Rename: "my photo 1.png" -> "my_photo_1.webp"
+function toWebpName(origName) {
+  let base = origName.replace(/\.[^.]+$/, ''); // strip extension
+  base = base.trim().replace(/\s+/g, '_');     // spaces -> underscore
+  base = base.replace(/[^a-zA-Z0-9_\-]/g, '_') // sanitize unsafe chars
+             .replace(/_+/g, '_')              // collapse __
+             .replace(/^_+|_+$/g, '');         // trim edge underscores
+  if (!base) base = 'converted_image';
+  return base + '.webp';
+}
+
+function fmt(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.add('dragover');
+}));
+['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.remove('dragover');
+}));
+dropzone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+
+function handleFiles(fileListObj) {
+  const files = [...fileListObj].filter(f => /png$/i.test(f.name) || f.type === 'image/png');
+  const rejected = fileListObj.length - files.length;
+  if (rejected > 0) alert(rejected + ' non-PNG file(s) skipped. Please select .png files only.');
+  files.forEach(addFile);
+  updateButtons();
+}
+
+function addFile(file) {
+  const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
+  const item = {
+    id,
+    origName: file.name,
+    newName: toWebpName(file.name),
+    origSize: file.size,
+    file,
+    status: 'converting',
+    webpBlob: null,
+    webpSize: 0,
+    url: null,
+    previewUrl: URL.createObjectURL(file)
+  };
+  items.push(item);
+  render();
+  convertItem(item);
+}
+
+async function convertItem(item) {
+  try {
+    const img = await loadImage(item.file);
+    const w = img.naturalWidth, h = img.naturalHeight;
+    const src = document.createElement('canvas');
+    src.width = w; src.height = h;
+    const sctx = src.getContext('2d', { willReadFrequently: true });
+    sctx.drawImage(img, 0, 0);
+    const ref = getPixels(src, w, h);
+
+    // Smart pass: lowest quality that still measures visually lossless = smallest file.
+    let best = null; // { q, blob, psnr }
+    for (const q of SMART_QUALITIES) {
+      const blob = await encodeCanvas(src, q);
+      const psnr = await psnrOfBlob(blob, ref, w, h);
+      if (psnr >= PSNR_THRESHOLD_DB) { best = { q, blob, psnr }; break; }
+      if (!best || blob.size < best.blob.size) best = { q, blob, psnr }; // track smallest so far
+    }
+    // Nothing hit the fidelity bar → fall back to maximum quality.
+    if (best.psnr < PSNR_THRESHOLD_DB) {
+      const blob = await encodeCanvas(src, WEBP_QUALITY);
+      best = { q: WEBP_QUALITY, blob, psnr: await psnrOfBlob(blob, ref, w, h) };
+    }
+    if (item.url) URL.revokeObjectURL(item.url);
+    item.webpBlob = best.blob;
+    item.webpSize = best.blob.size;
+    item.url = URL.createObjectURL(best.blob);
+    item.detail = 'q' + Math.round(best.q * 100) + ' · ' +
+      (isFinite(best.psnr) ? best.psnr.toFixed(1) + 'dB' : 'lossless');
+    item.status = 'done';
+  } catch (err) {
+    console.error(err);
+    item.status = 'error';
+  }
+  render();
+  updateButtons();
+  updateSummary();
+}
+
+function encodeCanvas(canvas, q) {
+  return new Promise((res, rej) =>
+    canvas.toBlob(b => b ? res(b) : rej(new Error('conversion failed')), 'image/webp', q)
+  );
+}
+
+// Downscaled pixel sample of a canvas (fast fidelity comparison).
+function getPixels(canvas, w, h) {
+  const scale = Math.min(1, Math.sqrt(PSNR_SAMPLE_MAX / (w * h)));
+  const sw = Math.max(1, Math.round(w * scale));
+  const sh = Math.max(1, Math.round(h * scale));
+  const c = document.createElement('canvas');
+  c.width = sw; c.height = sh;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(canvas, 0, 0, sw, sh);
+  return ctx.getImageData(0, 0, sw, sh);
+}
+
+// PSNR (dB) between a WebP blob and the original pixels. Higher = closer to original.
+async function psnrOfBlob(blob, refPixels, w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  if (typeof createImageBitmap === 'function') {
+    const bmp = await createImageBitmap(blob);
+    ctx.drawImage(bmp, 0, 0);
+    if (bmp.close) bmp.close();
+  } else {
+    const img = await loadImage(blob);
+    ctx.drawImage(img, 0, 0);
+  }
+  return computePSNR(refPixels, getPixels(c, w, h));
+}
+
+function computePSNR(a, b) {
+  const da = a.data, db = b.data;
+  let sum = 0;
+  for (let i = 0; i < da.length; i++) {
+    const d = da[i] - db[i];
+    sum += d * d;
+  }
+  const mse = sum / da.length;
+  if (mse === 0) return Infinity;
+  return 10 * Math.log10((255 * 255) / mse);
+}
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read ' + file.name)); };
+    img.src = url;
+  });
+}
+
+function render() {
+  fileList.innerHTML = '';
+  // ensure unique output names if duplicates uploaded
+  const seen = {};
+  items.forEach(item => {
+    let name = item.newName;
+    if (seen[name] !== undefined) {
+      seen[name]++;
+      name = name.replace(/\.webp$/, `_${seen[name]}.webp`);
+      item.newName = name;
+    } else {
+      seen[name] = 0;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    const saving = item.webpSize ? Math.round((1 - item.webpSize / item.origSize) * 100) : 0;
+
+    card.innerHTML = `
+      <img src="${item.status === 'done' ? item.url : item.previewUrl}" alt="preview" />
+      <div>
+        <div class="name">${escapeHtml(item.origName)} <span class="arrow">→</span> ${escapeHtml(item.newName)}</div>
+        <div class="meta">${fmt(item.origSize)} → ${item.webpSize ? fmt(item.webpSize) : '…'}
+          ${item.webpSize ? `<span class="save">${saving >= 0 ? '−' + saving + '%' : '+' + Math.abs(saving) + '% larger'}</span>` : ''}
+          ${item.detail ? ` · ${escapeHtml(item.detail)}` : ''}
+        </div>
+        <div class="status ${item.status}">${statusText(item.status)}</div>
+      </div>
+      <div>
+        <button class="btn-dl" ${item.status !== 'done' ? 'disabled' : ''} data-id="${item.id}">Download</button>
+      </div>`;
+    fileList.appendChild(card);
+  });
+
+  fileList.querySelectorAll('.btn-dl').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = items.find(i => i.id === btn.dataset.id);
+      if (item && item.webpBlob) downloadBlob(item.webpBlob, item.newName);
+    });
+  });
+}
+
+function statusText(s) {
+  if (s === 'converting') return '⏳ Smart-encoding (finding smallest high-quality file)…';
+  if (s === 'done') return '✅ Done — ready to download';
+  return '❌ Conversion failed';
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function updateButtons() {
+  const any = items.length > 0;
+  const ready = items.some(i => i.status === 'done');
+  downloadAllBtn.disabled = !ready;
+  clearBtn.disabled = !any;
+}
+
+function updateSummary() {
+  const done = items.filter(i => i.status === 'done');
+  if (!done.length) { summary.style.display = 'none'; return; }
+  const tO = done.reduce((a, i) => a + i.origSize, 0);
+  const tW = done.reduce((a, i) => a + i.webpSize, 0);
+  const pct = Math.round((1 - tW / tO) * 100);
+  summary.style.display = 'block';
+  summary.innerHTML = `✅ <b>${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${pct}% smaller</b>`;
+}
+
+downloadAllBtn.addEventListener('click', async () => {
+  const done = items.filter(i => i.status === 'done');
+  if (!done.length) return;
+  downloadAllBtn.disabled = true;
+  downloadAllBtn.textContent = 'Downloading…';
+  try {
+    // Download each converted file individually (no zip)
+    for (const item of done) {
+      downloadBlob(item.webpBlob, item.newName);
+      await new Promise(r => setTimeout(r, 400)); // small gap so browsers don't block multi-downloads
+    }
+  } finally {
+    downloadAllBtn.textContent = '⬇ Download All';
+    updateButtons();
+  }
+});
+
+clearBtn.addEventListener('click', () => {
+  items.forEach(i => { if (i.url) URL.revokeObjectURL(i.url); });
+  items = [];
+  fileInput.value = '';
+  render(); updateButtons(); updateSummary();
+});
+</script>
+</body>
+</html>
