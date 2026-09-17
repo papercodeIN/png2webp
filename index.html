@@ -113,13 +113,13 @@
 <div class="container">
   <span class="badge">100% LOCAL · NO UPLOAD · PRIVATE</span>
   <h1>PNG → WebP Converter</h1>
-  <p class="sub">Select multiple PNG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code>spaces/dashes → underscores</code>.</p>
+  <p class="sub">Select multiple PNG/JPEG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code>spaces/dashes → underscores</code>.</p>
 
   <div class="top-row">
     <div id="dropzone" title="Click or drop files">
-      <div class="big">📁 Drag &amp; drop PNG files here</div>
+      <div class="big">📁 Drag &amp; drop PNG/JPEG files here</div>
       <div class="small">or click to browse · multiple files supported · stays on your machine</div>
-      <input type="file" id="fileInput" accept=".png,image/png" multiple hidden />
+      <input type="file" id="fileInput" accept=".png,image/png,.jpg,.jpeg,image/jpeg" multiple hidden />
     </div>
     <div id="pathsSection">
       <div class="paths-head">
@@ -196,9 +196,9 @@ fileInput.addEventListener('change', e => handleFiles(e.target.files));
 dropzone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
 
 function handleFiles(fileListObj) {
-  const files = [...fileListObj].filter(f => /png$/i.test(f.name) || f.type === 'image/png');
+  const files = [...fileListObj].filter(f => /\.(png|jpe?g)$/i.test(f.name) || /^image\/(png|jpeg)$/i.test(f.type));
   const rejected = fileListObj.length - files.length;
-  if (rejected > 0) alert(rejected + ' non-PNG file(s) skipped. Please select .png files only.');
+  if (rejected > 0) alert(rejected + ' non-PNG/JPEG file(s) skipped. Please select .png or .jpg files only.');
   files.forEach(addFile);
   updateButtons();
 }
@@ -447,3 +447,5 @@ clearBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
+
