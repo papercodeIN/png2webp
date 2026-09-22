@@ -3,150 +3,336 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PNG → WebP Converter (Local)</title>
+<title>PNG/JPEG → WebP Converter — Local Tool</title>
+<meta name="description" content="Local, private PNG/JPEG to WebP converter — smart-encoded, smallest file at visually-lossless quality." />
 <style>
   :root {
-    --bg: #0f172a;
-    --card: #1e293b;
-    --accent: #22c55e;
-    --accent2: #3b82f6;
-    --text: #f1f5f9;
-    --muted: #94a3b8;
-    --border: #334155;
+    --bg:#020604;
+    --card:#04100a;
+    --card-2:#06130b;
+    --line:#0f3d26;
+    --line-soft:#1a4a30;
+    --lime:#4ade4a;
+    --lime-dark:#0b3a25;
+    --text:#ffffff;
+    --text-2:#d3ecd8;
+    --muted:#a3c5ad;
+    --muted-2:#84a18c;
+    --muted-3:#63806b;
   }
   * { box-sizing: border-box; }
+  html,body { background: var(--bg); color: #fff; }
   body {
     margin: 0;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    font-family: Geist, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     min-height: 100vh;
+    display: flex; flex-direction: column;
+    overflow-x: clip;
   }
-  .container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
-  h1 { margin: 0 0 6px; font-size: 28px; }
-  p.sub { color: var(--muted); margin: 0 0 24px; }
-  .badge {
-    display: inline-block; background: #14532d; color: #bbf7d0;
-    font-size: 12px; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px;
+  /* ---- background FX (copied vibe from shop.fusionautomate.in) ---- */
+  .bg-fx { pointer-events:none; position:fixed; inset:0; z-index:-1; overflow:hidden; }
+  .animated-grid {
+    position:absolute; inset:0; opacity:.6;
+    background-image: linear-gradient(#4ade4a0d 1px, transparent 1px), linear-gradient(90deg, #4ade4a0d 1px, transparent 1px);
+    background-size:64px 64px;
+    animation: grid-pan 24s linear infinite;
   }
+  @keyframes grid-pan { to { background-position:64px 64px; } }
+  .glow-orb { position:absolute; border-radius:9999px; filter:blur(90px); animation: float-orb 16s ease-in-out infinite; }
+  @keyframes float-orb { 0%,100%{transform:translate(-6%,-4%) scale(1)} 50%{transform:translate(9%,7%) scale(1.18)} }
+  .corner { position:absolute; width:22px; height:22px; border-color:#4ade4a55; border-style:solid; border-width:0; opacity:.5; animation: corner-pulse 4s ease-in-out infinite; }
+  @keyframes corner-pulse { 50% { opacity:.9; } }
+
+  /* ---- layout ---- */
+  .container-page { width:min(1180px,100% - 2rem); margin-inline:auto; }
+  a { color:inherit; }
+
+  /* ---- header (matches shop) ---- */
+  header.site {
+    position:sticky; top:0; z-index:40;
+    border-bottom:1px solid var(--line);
+    background:rgba(2,6,4,.95); backdrop-filter: blur(8px);
+  }
+  .header-inner { display:flex; height:64px; align-items:center; justify-content:space-between; gap:1rem; }
+  .brand { display:flex; align-items:center; gap:.6rem; text-decoration:none; }
+  .brand-mark {
+    width:40px; height:32px; display:grid; place-items:center;
+    background:var(--lime); color:#081000; font-weight:800; font-size:13px; letter-spacing:.05em;
+    clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+  }
+  .brand-name { font-size:13px; font-weight:800; letter-spacing:.16em; line-height:1.1; }
+  .brand-name span { color:var(--lime); }
+  .brand-sub { display:block; font-size:9px; font-weight:600; letter-spacing:.28em; color:var(--muted-2); }
+  nav.main { display:none; align-items:center; gap:1.5rem; font-size:11px; font-weight:600; letter-spacing:.16em; color:var(--text-2); }
+  nav.main a { text-decoration:none; padding-bottom:4px; white-space:nowrap; }
+  nav.main a:hover { color:var(--lime); }
+  nav.main a.active { color:var(--lime); border-bottom:2px solid var(--lime); }
+  @media(min-width:1024px){ nav.main{ display:flex; } }
+  .header-actions { display:flex; align-items:center; gap:.6rem; }
+  .pill {
+    display:inline-flex; align-items:center; gap:.4rem;
+    border:1px solid var(--line); border-radius:6px; padding:.5rem .7rem;
+    font-size:10px; font-weight:800; letter-spacing:.14em; color:var(--text-2); background:transparent;
+  }
+
+  /* ---- buttons (lime-btn / ghost-btn from shop) ---- */
+  .lime-btn {
+    background:var(--lime); color:#081000; letter-spacing:.06em; text-transform:uppercase;
+    clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+    font-weight:800; border:0; cursor:pointer; position:relative; overflow:hidden;
+    padding:.9rem 1.6rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem;
+    transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,filter .3s;
+    text-decoration:none;
+  }
+  .lime-btn:after{
+    content:""; pointer-events:none; position:absolute; top:0; bottom:0; left:-60%; width:40%;
+    background:linear-gradient(105deg,transparent, #ffffff66, transparent);
+    transform:skew(-20deg); animation:cta-shine 2.8s ease-in-out infinite;
+  }
+  @keyframes cta-shine { 0%{left:-60%} 55%,100%{left:130%} }
+  .lime-btn:hover { transform:translateY(-2px); box-shadow:0 14px 34px -12px #4ade4a8c; }
+  .lime-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+  .ghost-btn {
+    color:#cfe6d2; letter-spacing:.08em; text-transform:uppercase;
+    clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+    background:linear-gradient(135deg,#04100af5,#030906f5);
+    border:1px solid var(--line-soft); font-weight:700; cursor:pointer;
+    padding:.9rem 1.5rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem;
+    transition:transform .25s, border-color .25s, box-shadow .25s, color .25s;
+    text-decoration:none;
+  }
+  .ghost-btn:hover { border-color:var(--lime); color:#fff; background:#4ade4a1a; transform:translateY(-2px); }
+  .ghost-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+  .btn-sm { padding:.55rem .9rem; font-size:10px; }
+
+  /* ---- hero ---- */
+  .eyebrow {
+    margin:0 0 1rem; font-size:11px; font-weight:700; letter-spacing:.22em; color:var(--muted);
+    text-transform:uppercase;
+  }
+  .eyebrow b { color:var(--lime); font-weight:800; }
+  .hero { padding:3.2rem 0 1.6rem; position:relative; }
+  .hero h1 {
+    margin:0 0 .8rem; font-family: Oxanium, Geist, system-ui, sans-serif;
+    font-size:clamp(2rem, 5vw, 3.4rem); line-height:1.02; letter-spacing:-.02em; font-weight:800;
+  }
+  .hero h1 .lime { color:var(--lime); }
+  .hero p.lead { margin:0; max-width:62ch; color:var(--text-2); line-height:1.6; font-size:15px; }
+  .hero p.lead code, code.inline {
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    background:#06130b; border:1px solid var(--line); padding:2px 7px; border-radius:6px; color:#a5f3c0; font-size:.85em;
+  }
+  .badge-row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.1rem; }
+  .t-badge {
+    font-size:10px; font-weight:800; letter-spacing:.16em; text-transform:uppercase;
+    border:1px solid var(--line-soft); color:var(--lime); background:#4ade4a0f;
+    padding:.45rem .8rem; clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
+  }
+  .t-badge.dim { color:var(--muted); background:transparent; }
+
+  /* ---- stats (matches THE NUMBERS) ---- */
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--line); background:var(--card); margin-top:1.6rem; }
+  .stat { padding:1rem 1.1rem; border-right:1px solid var(--line); }
+  .stat:last-child{ border-right:0; }
+  .stat .n { font-family:Oxanium, system-ui, sans-serif; font-weight:800; font-size:1.25rem; color:var(--lime); }
+  .stat .l { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-top:.25rem; }
+  @media(max-width:640px){ .stats{grid-template-columns:1fr} .stat{border-right:0; border-bottom:1px solid var(--line)} .stat:last-child{border-bottom:0} }
+
+  /* ---- tool grid ---- */
+  .tool-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:1rem; margin-top:1rem; }
+  @media(max-width:860px){ .tool-grid{grid-template-columns:1fr} }
+  .panel {
+    background:linear-gradient(135deg, #04100af5, #030906f5);
+    border:1px solid var(--line); padding:1.2rem;
+    position:relative;
+  }
+  .panel:before {
+    content:""; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, var(--lime), transparent 70%);
+    opacity:.7;
+  }
+  .panel h3 { margin:0 0 .3rem; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); }
+  .panel h3 i { color:var(--lime); font-style:normal; }
+  .panel .hint { margin:0 0 .9rem; font-size:13px; color:var(--muted); line-height:1.5; }
+
   #dropzone {
-    border: 2px dashed var(--border);
-    border-radius: 16px;
-    background: var(--card);
-    padding: 40px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .2s, background .2s;
+    border:1px dashed #2a6a42; border-radius:2px;
+    background:#020604; padding:2.6rem 1.2rem; text-align:center; cursor:pointer;
+    transition:border-color .2s, background .2s, box-shadow .2s;
   }
   #dropzone:hover, #dropzone.dragover {
-    border-color: var(--accent);
-    background: #172554;
+    border-color:var(--lime); background:#06130b; box-shadow:0 0 0 3px #4ade4a24;
   }
-  #dropzone .big { font-size: 18px; font-weight: 600; }
-  #dropzone .small { color: var(--muted); font-size: 14px; margin-top: 6px; }
-  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-  button {
-    border: 0; border-radius: 10px; padding: 12px 18px;
-    font-size: 14px; font-weight: 600; cursor: pointer;
+  #dropzone .big { font-family:Oxanium, system-ui, sans-serif; font-size:17px; font-weight:700; }
+  #dropzone .big span { color:var(--lime); }
+  #dropzone .small { color:var(--muted-2); font-size:13px; margin-top:.5rem; }
+  #dropzone .drop-ic {
+    width:44px; height:44px; margin:0 auto .8rem; display:grid; place-items:center;
+    background:#4ade4a14; border:1px solid var(--line-soft); color:var(--lime); font-size:20px;
+    clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
   }
-  .btn-primary { background: var(--accent); color: #052e16; }
-  .btn-primary:hover { background: #16a34a; color: #fff; }
-  .btn-secondary { background: #334155; color: var(--text); }
-  .btn-secondary:hover { background: #475569; }
-  .btn-dl { background: var(--accent2); color: #fff; padding: 8px 14px; font-size: 13px; }
-  .btn-dl:hover { background: #2563eb; }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  .settings {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px 18px; margin-top: 18px;
-    display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
-  }
-  .settings label { font-size: 14px; color: var(--muted); }
-  .settings output { font-weight: 700; color: var(--text); }
-  #fileList { margin-top: 20px; display: grid; gap: 12px; }
-  .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 14px;
-    display: grid; grid-template-columns: 72px 1fr auto;
-    gap: 14px; align-items: center;
-  }
-  .card img {
-    width: 72px; height: 72px; object-fit: contain;
-    background: #0b1220; border-radius: 10px; border: 1px solid var(--border);
-  }
-  .name { font-weight: 600; font-size: 14px; word-break: break-all; }
-  .name .arrow { color: var(--accent); }
-  .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
-  .meta .save { color: #4ade80; font-weight: 700; }
-  .status { font-size: 12px; margin-top: 4px; }
-  .status.converting { color: #facc15; }
-  .status.done { color: #4ade80; }
-  .status.error { color: #f87171; }
-  #summary {
-    margin-top: 18px; background: #052e16; border: 1px solid #166534;
-    padding: 14px 16px; border-radius: 12px; font-size: 14px; display: none;
-  }
-  .top-row { display: flex; gap: 14px; align-items: flex-start; }
-  .top-row > #dropzone { flex: 1; min-width: 0; }
-  .top-row > #pathsSection { flex: 1; min-width: 0; }
-  @media (max-width: 640px) { .top-row { flex-direction: column; } }
+
+  .kv { display:grid; gap:.6rem; margin-top:1rem; font-size:13px; color:var(--muted); }
+  .kv div { display:flex; gap:.6rem; align-items:flex-start; line-height:1.5; }
+  .kv b { color:var(--text-2); }
+  .dot { color:var(--lime); font-weight:800; }
+
+  .btn-row { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
+
   #pathsSection {
-    background: #0b1220; border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px 16px; font-size: 14px; display: none;
+    background:#020604; border:1px solid var(--line-soft);
+    padding:.9rem 1rem; font-size:14px; display:none; margin-top:1rem;
   }
-  #pathsSection .paths-head {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 10px; margin-bottom: 8px;
-  }
-  #pathsSection h3 { margin: 0; font-size: 14px; }
+  #pathsSection .paths-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+  #pathsSection h3 { margin:0; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); }
   #pathsList {
-    margin: 0; white-space: pre-wrap; word-break: break-all;
-    color: #a5f3fc; font-size: 13px; font-family: Consolas, monospace;
+    margin:0; white-space:pre-wrap; word-break:break-all;
+    color:#a5f3c0; font-size:13px; font-family:ui-monospace, Menlo, Consolas, monospace;
+    max-height:160px; overflow:auto;
   }
-  .btn-copy { background: #334155; color: var(--text); padding: 8px 14px; font-size: 13px; }
-  .btn-copy:hover { background: #475569; }
-  footer { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
-  code { background: #0b1220; padding: 2px 6px; border-radius: 6px; }
+
+  #fileList { margin-top:1rem; display:grid; gap:.7rem; }
+  .card {
+    background:var(--card); border:1px solid var(--line);
+    padding:.9rem; display:grid; grid-template-columns:72px 1fr auto; gap:.9rem; align-items:center;
+    transition:border-color .2s;
+  }
+  .card:hover { border-color:#2a6a42; }
+  .card img {
+    width:72px; height:72px; object-fit:contain;
+    background:#020604; border:1px solid var(--line); border-radius:2px;
+  }
+  .name { font-weight:700; font-size:13.5px; word-break:break-all; color:#fff; }
+  .name .arrow { color:var(--lime); }
+  .name .new { color:var(--lime); }
+  .meta { color:var(--muted); font-size:12.5px; margin-top:5px; font-family:ui-monospace, Menlo, monospace; }
+  .meta .save { color:var(--lime); font-weight:800; }
+  .meta .save.larger { color:#ff6568; }
+  .status { font-size:11px; margin-top:5px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
+  .status.converting { color:#ffd236; }
+  .status.done { color:var(--lime); }
+  .status.error { color:#ff6568; }
+  .empty {
+    border:1px dashed var(--line-soft); padding:1.4rem; text-align:center; color:var(--muted-2);
+    font-size:13px; background:#02060466;
+  }
+  #summary {
+    margin-top:1rem; background:#4ade4a0f; border:1px solid #1f6a38;
+    padding:.9rem 1rem; font-size:13.5px; display:none; color:var(--text-2);
+  }
+  #summary b { color:var(--lime); }
+  #summary.warning { background:#2a0e0e55; border-color:#7f1d1d; }
+  #summary.warning b { color:#ff6568; }
+  #summary.warning b.count { color:#fff; }
+
+  footer.site { margin-top:2.5rem; border-top:1px solid var(--line); background:#020604; }
+  .footer-grid-bg { background-image:radial-gradient(#4ade4a1c 1px, transparent 1px); background-size:22px 22px; }
+  .foot-inner { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; padding:1.4rem 0; }
+  .foot-links { display:flex; flex-wrap:wrap; gap:1.1rem; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .foot-links a { text-decoration:none; } .foot-links a:hover{ color:var(--lime); }
+  .copy { color:var(--muted-3); font-size:12px; }
+  .tip { margin-top:.9rem; color:var(--muted-3); font-size:12px; text-align:center; padding-bottom:1.2rem; }
 </style>
 </head>
 <body>
-<div class="container">
-  <span class="badge">100% LOCAL · NO UPLOAD · PRIVATE</span>
-  <h1>PNG → WebP Converter</h1>
-  <p class="sub">Select multiple PNG/JPEG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code>spaces/dashes → underscores</code>.</p>
 
-  <div class="top-row">
-    <div id="dropzone" title="Click or drop files">
-      <div class="big">📁 Drag &amp; drop PNG/JPEG files here</div>
-      <div class="small">or click to browse · multiple files supported · stays on your machine</div>
-      <input type="file" id="fileInput" accept=".png,image/png,.jpg,.jpeg,image/jpeg" multiple hidden />
-    </div>
-    <div id="pathsSection">
-      <div class="paths-head">
-        <h3>Output paths</h3>
-        <button class="btn-copy" id="copyPathsBtn">Copy</button>
-      </div>
-      <pre id="pathsList"></pre>
-    </div>
-  </div>
-
-  <div class="settings">
-    <div style="font-size:14px">🧠 <b>Smart encode</b> — tries qualities 75 → 93 and keeps the <b>smallest file</b> proven visually lossless (PSNR ≥ 40 dB, measured against your original). Falls back to 100 only if needed.</div>
-    <div style="font-size:13px;color:var(--muted);max-width:420px">
-      Rename rule: <code>My Photo-1.png</code> → <code>My_Photo_1.webp</code>
-    </div>
-  </div>
-
-  <div class="btn-row">
-    <button class="btn-primary" id="downloadAllBtn" disabled>⬇ Download All</button>
-    <button class="btn-secondary" id="clearBtn" disabled>Clear</button>
-  </div>
-
-  <div id="fileList"></div>
-  <div id="summary"></div>
-
-  <footer>Tip: run locally by double-clicking this file, or with <code>python -m http.server</code>. Nothing leaves your computer.</footer>
+<div class="bg-fx" aria-hidden="true">
+  <div class="animated-grid"></div>
+  <div class="glow-orb" style="left:-8%; top:-6%; height:360px; width:360px; background:rgba(74,222,74,.08)"></div>
+  <div class="glow-orb" style="right:-10%; top:30%; height:420px; width:420px; background:rgba(15,61,38,.55); animation-delay:-7s"></div>
+  <div class="glow-orb" style="bottom:-14%; left:28%; height:360px; width:360px; background:rgba(74,222,74,.06); animation-delay:-3s"></div>
+  <span class="corner" style="left:12px; top:76px; border-left-width:1px; border-top-width:1px;"></span>
+  <span class="corner" style="right:12px; top:76px; border-right-width:1px; border-top-width:1px;"></span>
 </div>
+
+<header class="site">
+  <div class="container-page header-inner">
+    <div class="brand" style="cursor:default">
+      <span class="brand-mark">⇄</span>
+      <span class="brand-name">PNG · JPEG <span>→ WEBP</span><span class="brand-sub">LOCAL CONVERTER · PRIVATE</span></span>
+    </div>
+    <div class="header-actions">
+      <span class="pill">100% LOCAL · NO UPLOAD</span>
+    </div>
+  </div>
+</header>
+
+<main class="container-page" style="flex:1">
+  <section class="hero">
+    <p class="eyebrow">LOCAL TOOL <b>/ PRIVATE · OFFLINE</b></p>
+    <h1>Convert. Optimize.<br /><span class="lime">Upload-ready WebP.</span></h1>
+    <p class="lead">Select multiple PNG/JPEG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code class="inline">spaces/dashes → underscores</code>, ready for <code class="inline">/uploads/</code>.</p>
+    <div class="badge-row">
+      <span class="t-badge">● 100% local · no upload</span>
+      <span class="t-badge dim">PNG + JPEG → WebP</span>
+      <span class="t-badge dim">Smart encode 75 → 93</span>
+      <span class="t-badge dim">PSNR ≥ 40 dB</span>
+      <span class="t-badge dim">Auto /uploads/ paths</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n" id="statFiles">0</div><div class="l">Files converted</div></div>
+      <div class="stat"><div class="n" id="statSaved">—</div><div class="l" id="statSavedLabel">Size change</div></div>
+      <div class="stat"><div class="n">PRIVATE</div><div class="l">Stays on your machine</div></div>
+    </div>
+  </section>
+
+  <section class="tool-grid">
+    <div class="panel">
+      <h3><i>01 /</i> INPUT — PNG / JPEG</h3>
+      <p class="hint">Drag &amp; drop <b>PNG or JPEG/JPG</b> or browse. Everything is encoded in-browser — nothing leaves your computer.</p>
+      <div id="dropzone" title="Click or drop files">
+        <div class="drop-ic">⇪</div>
+        <div class="big">Drag &amp; drop <span>PNG / JPEG</span> here</div>
+        <div class="small">or click to browse .png / .jpg / .jpeg · multiple files supported · stays on your machine</div>
+        <input type="file" id="fileInput" accept=".png,image/png,.jpg,.jpeg,image/jpeg" multiple hidden />
+      </div>
+      <div class="btn-row">
+        <button class="lime-btn" id="downloadAllBtn" disabled>⬇ Download All</button>
+        <button class="ghost-btn" id="clearBtn" disabled>Clear</button>
+      </div>
+      <div id="summary"></div>
+    </div>
+
+    <div class="panel">
+      <h3><i>02 /</i> SMART ENCODE + OUTPUT</h3>
+      <p class="hint">Tries qualities 75 → 93 and keeps the <b>smallest file</b> proven visually lossless (PSNR ≥ 40 dB). Falls back to 100 only if needed.</p>
+      <div class="kv">
+        <div><span class="dot">▸</span><span><b>Inputs:</b> <code class="inline">.png</code> + <code class="inline">.jpg / .jpeg</code> → <code class="inline">.webp</code></span></div>
+        <div><span class="dot">▸</span><span><b>Rename rule:</b> <code class="inline">My Photo-1.png</code> → <code class="inline">My_Photo_1.webp</code> · <code class="inline">photo-2.jpg</code> → <code class="inline">photo_2.webp</code></span></div>
+        <div><span class="dot">▸</span><span><b>Paths:</b> copied as <code class="inline">/uploads/Your_File.webp</code> for direct use in your project.</span></div>
+        <div><span class="dot">▸</span><span><b>Privacy:</b> just double-click this file — works fully offline.</span></div>
+      </div>
+      <div id="pathsSection">
+        <div class="paths-head">
+          <h3>Output paths</h3>
+          <button class="ghost-btn btn-sm" id="copyPathsBtn">Copy</button>
+        </div>
+        <pre id="pathsList"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-top:1rem">
+    <div class="panel">
+      <h3><i>03 /</i> QUEUE — CONVERSION STATUS</h3>
+      <p class="hint">Per-file preview, size delta, quality + fidelity readout, and individual download.</p>
+      <div id="fileList"><div class="empty">No files yet — drop PNG/JPEG files above to start smart-encoding.</div></div>
+    </div>
+  </section>
+
+  <div class="tip">Just double-click this file — works fully offline. Nothing leaves your computer.</div>
+</main>
+
+<footer class="site footer-grid-bg">
+  <div class="container-page foot-inner">
+    <div class="brand" style="cursor:default">
+      <span class="brand-mark" style="width:34px;height:28px;font-size:14px">⇄</span>
+      <span class="brand-name" style="font-size:12px">PNG · JPEG <span>→ WEBP</span></span>
+    </div>
+    <div class="copy">© 2026 · Local tool — private by design · Nothing leaves your computer</div>
+  </div>
+</footer>
 
 <script>
 const dropzone = document.getElementById('dropzone');
@@ -158,6 +344,8 @@ const summary = document.getElementById('summary');
 const pathsSection = document.getElementById('pathsSection');
 const pathsList = document.getElementById('pathsList');
 const copyPathsBtn = document.getElementById('copyPathsBtn');
+const statFiles = document.getElementById('statFiles');
+const statSaved = document.getElementById('statSaved');
 
 const WEBP_QUALITY = 1.0; // fallback only — smart encode picks per-file quality below
 // Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
@@ -319,6 +507,10 @@ function loadImage(file) {
 
 function render() {
   fileList.innerHTML = '';
+  if (!items.length) {
+    fileList.innerHTML = '<div class="empty">No files yet — drop PNG/JPEG files above to start smart-encoding.</div>';
+    return;
+  }
   // ensure unique output names if duplicates uploaded
   const seen = {};
   items.forEach(item => {
@@ -338,20 +530,20 @@ function render() {
     card.innerHTML = `
       <img src="${item.status === 'done' ? item.url : item.previewUrl}" alt="preview" />
       <div>
-        <div class="name">${escapeHtml(item.origName)} <span class="arrow">→</span> ${escapeHtml(item.newName)}</div>
+        <div class="name">${escapeHtml(item.origName)} <span class="arrow">→</span> <span class="new">${escapeHtml(item.newName)}</span></div>
         <div class="meta">${fmt(item.origSize)} → ${item.webpSize ? fmt(item.webpSize) : '…'}
-          ${item.webpSize ? `<span class="save">${saving >= 0 ? '−' + saving + '%' : '+' + Math.abs(saving) + '% larger'}</span>` : ''}
+          ${item.webpSize ? `<span class="save${saving < 0 ? ' larger' : ''}">${saving >= 0 ? '−' + saving + '% smaller' : '+' + Math.abs(saving) + '% larger'}</span>` : ''}
           ${item.detail ? ` · ${escapeHtml(item.detail)}` : ''}
         </div>
         <div class="status ${item.status}">${statusText(item.status)}</div>
       </div>
       <div>
-        <button class="btn-dl" ${item.status !== 'done' ? 'disabled' : ''} data-id="${item.id}">Download</button>
+        <button class="lime-btn btn-sm" ${item.status !== 'done' ? 'disabled' : ''} data-id="${item.id}">Download</button>
       </div>`;
     fileList.appendChild(card);
   });
 
-  fileList.querySelectorAll('.btn-dl').forEach(btn => {
+  fileList.querySelectorAll('.lime-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = items.find(i => i.id === btn.dataset.id);
       if (item && item.webpBlob) downloadBlob(item.webpBlob, item.newName);
@@ -360,9 +552,9 @@ function render() {
 }
 
 function statusText(s) {
-  if (s === 'converting') return '⏳ Smart-encoding (finding smallest high-quality file)…';
-  if (s === 'done') return '✅ Done — ready to download';
-  return '❌ Conversion failed';
+  if (s === 'converting') return '◌ Smart-encoding…';
+  if (s === 'done') return '● Done — ready';
+  return '● Failed';
 }
 
 function escapeHtml(s) {
@@ -387,13 +579,28 @@ function updateButtons() {
 
 function updateSummary() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { summary.style.display = 'none'; pathsSection.style.display = 'none'; return; }
+  if (!done.length) { summary.style.display = 'none'; pathsSection.style.display = 'none'; updateStats(0,0,0); return; }
   const tO = done.reduce((a, i) => a + i.origSize, 0);
   const tW = done.reduce((a, i) => a + i.webpSize, 0);
-  const pct = Math.round((1 - tW / tO) * 100);
+  const diff = tW - tO;
+  const pct = tO ? Math.round(Math.abs(diff) / tO * 100) : 0;
+  const label = diff <= 0 ? `${pct}% smaller` : `+${pct}% larger`;
   summary.style.display = 'block';
-  summary.innerHTML = `✅ <b>${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${pct}% smaller</b>`;
+  summary.classList.toggle('warning', diff > 0);
+  summary.innerHTML = `✅ <b class="count">${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${label}</b>` +
+    (diff > 0 ? `<div style="margin-top:6px;font-size:12px;color:var(--muted)">Note: PNG/JPEG screenshots with flat colors are often already optimal — WebP can be larger. Originals are still listed for comparison.</div>` : '');
   updatePaths();
+  updateStats(done.length, tO, tW);
+}
+
+function updateStats(count, tO, tW) {
+  statFiles.textContent = count;
+  if (!count) { statSaved.textContent = '—'; return; }
+  const diff = tW - tO;
+  const pct = tO ? Math.round(Math.abs(diff) / tO * 100) : 0;
+  statSaved.textContent = diff <= 0 ? '−' + pct + '%' : '+' + pct + '%';
+  statSaved.style.color = diff <= 0 ? 'var(--lime)' : '#ff6568';
+  document.getElementById('statSavedLabel').textContent = diff <= 0 ? 'Size saved' : 'Size larger';
 }
 
 // Output paths in /uploads/filename format
@@ -444,8 +651,8 @@ clearBtn.addEventListener('click', () => {
   fileInput.value = '';
   render(); updateButtons(); updateSummary();
 });
+
+render();
 </script>
 </body>
 </html>
-
-
