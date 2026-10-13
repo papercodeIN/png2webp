@@ -69,16 +69,23 @@
   nav.main a.active { color:var(--lime); border-bottom:2px solid var(--lime); }
   @media(min-width:1024px){ nav.main{ display:flex; } }
   .header-actions { display:flex; align-items:center; gap:.6rem; }
+  .header-actions .lime-btn { padding:.5rem .7rem; font-size:10px; }
   .pill {
     display:inline-flex; align-items:center; gap:.4rem;
     border:1px solid var(--line); border-radius:6px; padding:.5rem .7rem;
-    font-size:10px; font-weight:800; letter-spacing:.14em; color:var(--text-2); background:transparent;
+    font-size:10px; font-weight:800; letter-spacing:.14em; color:var(--text-2); background:transparent; cursor:pointer;
   }
+
+  /* ---- input field ---- */
+  .input-group { margin-top:1rem; }
+  .input-group label { display:block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted-2); margin-bottom:.45rem; }
+  .url-input { width:100%; background:#020604; border:1px solid var(--line-soft); color:#fff; padding:.75rem .9rem; font-size:13px; font-family:ui-monospace, Menlo, Consolas, monospace; letter-spacing:.03em; }
+  .url-input:focus { outline:none; border-color:var(--lime); box-shadow:0 0 0 3px #4ade4a24; }
 
   /* ---- buttons (lime-btn / ghost-btn from shop) ---- */
   .lime-btn {
     background:var(--lime); color:#081000; letter-spacing:.06em; text-transform:uppercase;
-    clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+    clip-path:polygon(8px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
     font-weight:800; border:0; cursor:pointer; position:relative; overflow:hidden;
     padding:.9rem 1.6rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem;
     transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,filter .3s;
@@ -97,7 +104,7 @@
     clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
     background:linear-gradient(135deg,#04100af5,#030906f5);
     border:1px solid var(--line-soft); font-weight:700; cursor:pointer;
-    padding:.9rem 1.5rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem;
+    padding:.9rem 1.5rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem; white-space:nowrap;
     transition:transform .25s, border-color .25s, box-shadow .25s, color .25s;
     text-decoration:none;
   }
@@ -138,8 +145,8 @@
   .stat .l { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-top:.25rem; }
   @media(max-width:640px){ .stats{grid-template-columns:1fr} .stat{border-right:0; border-bottom:1px solid var(--line)} .stat:last-child{border-bottom:0} }
 
-  /* ---- tool grid ---- */
-  .tool-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:1rem; margin-top:1rem; }
+  /* ---- tool grid: removed kv block and pathsSection from panel 02 ---- */
+  .tool-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1rem; }
   @media(max-width:860px){ .tool-grid{grid-template-columns:1fr} }
   .panel {
     background:linear-gradient(135deg, #04100af5, #030906f5);
@@ -179,18 +186,6 @@
 
   .btn-row { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
 
-  #pathsSection {
-    background:#020604; border:1px solid var(--line-soft);
-    padding:.9rem 1rem; font-size:14px; display:none; margin-top:1rem;
-  }
-  #pathsSection .paths-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
-  #pathsSection h3 { margin:0; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); }
-  #pathsList {
-    margin:0; white-space:pre-wrap; word-break:break-all;
-    color:#a5f3c0; font-size:13px; font-family:ui-monospace, Menlo, Consolas, monospace;
-    max-height:160px; overflow:auto;
-  }
-
   #fileList { margin-top:1rem; display:grid; gap:.7rem; }
   .card {
     background:var(--card); border:1px solid var(--line);
@@ -225,6 +220,21 @@
   #summary.warning b { color:#ff6568; }
   #summary.warning b.count { color:#fff; }
 
+  /* ---- rules modal ---- */
+  #rulesModal {
+    position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
+    background:#020604cc; backdrop-filter:blur(6px);
+  }
+  #rulesModal.open { display:flex; }
+  #rulesModal .panel {
+    background:#04100a; border:1px solid var(--line);
+    padding:1.4rem; max-width:560px; width:min(90%,620px);
+  }
+  #rulesModal h3 { margin:0 0 .3rem; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); }
+  #rulesModal p { font-size:13px; color:var(--muted); }
+  #rulesModal ul { margin:0; padding:0 0 0 1.2rem; color:var(--text-2); font-size:13px; line-height:1.6; }
+  @media(max-width:480px){ #rulesModal .panel { padding:1rem; } }
+
   footer.site { margin-top:2.5rem; border-top:1px solid var(--line); background:#020604; }
   .footer-grid-bg { background-image:radial-gradient(#4ade4a1c 1px, transparent 1px); background-size:22px 22px; }
   .foot-inner { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; padding:1.4rem 0; }
@@ -253,6 +263,7 @@
     </div>
     <div class="header-actions">
       <span class="pill">100% LOCAL · NO UPLOAD</span>
+      <button class="lime-btn" id="showRulesBtn">Rules</button>
     </div>
   </div>
 </header>
@@ -280,10 +291,10 @@
   <section class="tool-grid">
     <div class="panel">
       <h3><i>01 /</i> INPUT — PNG / JPEG</h3>
-      <p class="hint">Drag &amp; drop <b>PNG or JPEG/JPG</b> or browse. Everything is encoded in-browser — nothing leaves your computer.</p>
+      <p class="hint">Drag & drop <b>PNG or JPEG/JPG</b> or browse. Everything is encoded in-browser — nothing leaves your computer.</p>
       <div id="dropzone" title="Click or drop files">
         <div class="drop-ic">⇪</div>
-        <div class="big">Drag &amp; drop <span>PNG / JPEG</span> here</div>
+        <div class="big">Drag & drop <span>PNG / JPEG</span> here</div>
         <div class="small">or click to browse .png / .jpg / .jpeg · multiple files supported · stays on your machine</div>
         <input type="file" id="fileInput" accept=".png,image/png,.jpg,.jpeg,image/jpeg" multiple hidden />
       </div>
@@ -297,18 +308,10 @@
     <div class="panel">
       <h3><i>02 /</i> SMART ENCODE + OUTPUT</h3>
       <p class="hint">Tries qualities 75 → 93 and keeps the <b>smallest file</b> proven visually lossless (PSNR ≥ 40 dB). Falls back to 100 only if needed.</p>
-      <div class="kv">
-        <div><span class="dot">▸</span><span><b>Inputs:</b> <code class="inline">.png</code> + <code class="inline">.jpg / .jpeg</code> → <code class="inline">.webp</code></span></div>
-        <div><span class="dot">▸</span><span><b>Rename rule:</b> <code class="inline">My Photo-1.png</code> → <code class="inline">My_Photo_1.webp</code> · <code class="inline">photo-2.jpg</code> → <code class="inline">photo_2.webp</code></span></div>
-        <div><span class="dot">▸</span><span><b>Paths:</b> copied as <code class="inline">/uploads/Your_File.webp</code> for direct use in your project.</span></div>
-        <div><span class="dot">▸</span><span><b>Privacy:</b> just double-click this file — works fully offline.</span></div>
-      </div>
-      <div id="pathsSection">
-        <div class="paths-head">
-          <h3>Output paths</h3>
-          <button class="ghost-btn btn-sm" id="copyPathsBtn">Copy</button>
-        </div>
-        <pre id="pathsList"></pre>
+
+      <div class="input-group">
+        <label for="outputPrefix">Output path prefix</label>
+        <input type="text" id="outputPrefix" class="url-input" value="/uploads/" placeholder="e.g. /uploads/" />
       </div>
     </div>
   </section>
@@ -322,6 +325,22 @@
   </section>
 
   <div class="tip">Just double-click this file — works fully offline. Nothing leaves your computer.</div>
+
+  <!-- rules modal -->
+  <div id="rulesModal">
+    <div class="panel">
+      <h3>Conversion rules</h3>
+      <ul>
+        <li><b>Inputs:</b> .png + .jpg / .jpeg → .webp</li>
+        <li><b>Rename rule:</b> My Photo-1.png → My_Photo_1.webp · photo-2.jpg → photo_2.webp</li>
+        <li><b>Paths:</b> copied as /uploads/Your_File.webp for direct use in your project.</li>
+        <li><b>Privacy:</b> just double-click this file — works fully offline.</li>
+      </ul>
+      <div class="btn-row">
+        <button class="ghost-btn" id="closeRulesBtn">Got it</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <footer class="site footer-grid-bg">
@@ -341,11 +360,28 @@ const fileList = document.getElementById('fileList');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const clearBtn = document.getElementById('clearBtn');
 const summary = document.getElementById('summary');
-const pathsSection = document.getElementById('pathsSection');
-const pathsList = document.getElementById('pathsList');
-const copyPathsBtn = document.getElementById('copyPathsBtn');
 const statFiles = document.getElementById('statFiles');
 const statSaved = document.getElementById('statSaved');
+const outputPrefixInput = document.getElementById('outputPrefix');
+
+// Current output path prefix (default "/uploads/").
+let outputPathPrefix = '/uploads/';
+outputPrefixInput.addEventListener('input', () => {
+  let v = outputPrefixInput.value.trim();
+  if (v === '') v = '/uploads/';
+  if (v === '/') v = '/uploads/';
+  // keep only a leading slash, strip trailing slashes
+  v = '/' + v.replace(/^\/+|\/+$/g, '');
+  outputPathPrefix = v + '/';
+  updateSummary();
+});
+
+// Output path helper: always ensures trailing slash on prefix.
+function getOutputPath(name) {
+  let p = outputPathPrefix;
+  if (name.startsWith('/')) name = name.slice(1);
+  return p + name;
+}
 
 const WEBP_QUALITY = 1.0; // fallback only — smart encode picks per-file quality below
 // Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
@@ -579,7 +615,7 @@ function updateButtons() {
 
 function updateSummary() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { summary.style.display = 'none'; pathsSection.style.display = 'none'; updateStats(0,0,0); return; }
+  if (!done.length) { summary.style.display = 'none'; updateStats(0,0,0); return; }
   const tO = done.reduce((a, i) => a + i.origSize, 0);
   const tW = done.reduce((a, i) => a + i.webpSize, 0);
   const diff = tW - tO;
@@ -603,30 +639,15 @@ function updateStats(count, tO, tW) {
   document.getElementById('statSavedLabel').textContent = diff <= 0 ? 'Size saved' : 'Size larger';
 }
 
-// Output paths in /uploads/filename format
+// Output paths using dynamic prefix via getOutputPath
 function updatePaths() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { pathsSection.style.display = 'none'; return; }
-  pathsSection.style.display = 'block';
-  pathsList.textContent = done.map(i => '/uploads/' + i.newName).join('\n');
-}
-
-copyPathsBtn.addEventListener('click', async () => {
-  const text = pathsList.textContent;
-  if (!text) return;
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (e) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
+  if (!done.length) { return; }
+  const pathsList = document.getElementById('pathsList');
+  if (pathsList) {
+    pathsList.textContent = done.map(i => getOutputPath(i.newName)).join('\n');
   }
-  copyPathsBtn.textContent = 'Copied!';
-  setTimeout(() => { copyPathsBtn.textContent = 'Copy'; }, 1500);
-});
+}
 
 downloadAllBtn.addEventListener('click', async () => {
   const done = items.filter(i => i.status === 'done');
@@ -651,6 +672,15 @@ clearBtn.addEventListener('click', () => {
   fileInput.value = '';
   render(); updateButtons(); updateSummary();
 });
+
+const showRulesBtn = document.getElementById('showRulesBtn');
+const rulesModal = document.getElementById('rulesModal');
+const closeRulesBtn = document.getElementById('closeRulesBtn');
+
+showRulesBtn.addEventListener('click', () => { rulesModal.classList.toggle('open'); });
+closeRulesBtn.addEventListener('click', () => { rulesModal.classList.remove('open'); });
+rulesModal.addEventListener('click', (e) => { if (e.target === rulesModal) rulesModal.classList.remove('open'); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && rulesModal.classList.contains('open')) { rulesModal.classList.remove('open'); } });
 
 render();
 </script>
