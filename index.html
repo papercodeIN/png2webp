@@ -3,267 +3,333 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PNG/JPEG → WebP Converter — Local Tool</title>
-<meta name="description" content="Local, private PNG/JPEG to WebP converter — smart-encoded, smallest file at visually-lossless quality." />
+<meta name="color-scheme" content="dark" />
+<title>Image → WebP Converter — Local & Private</title>
+<meta name="description" content="Free local image converter: HEIC, TIFF, PNG, JPEG, GIF, BMP, AVIF → WebP. Smart-encoded, visually lossless, 100% in your browser — no upload, no storage, no cloud." />
 <style>
+  /* ================= tokens ================= */
   :root {
-    --bg:#020604;
-    --card:#04100a;
-    --card-2:#06130b;
-    --line:#0f3d26;
-    --line-soft:#1a4a30;
-    --lime:#4ade4a;
-    --lime-dark:#0b3a25;
-    --text:#ffffff;
-    --text-2:#d3ecd8;
-    --muted:#a3c5ad;
-    --muted-2:#84a18c;
-    --muted-3:#63806b;
+    --bg: #070b08;
+    --surface: #0b110c;
+    --surface-2: #0d140f;
+    --surface-3: #101a13;
+    --line: #1c2b21;
+    --line-strong: #2b4232;
+    --lime: #4ade4a;
+    --lime-soft: rgba(74, 222, 74, .12);
+    --lime-ring: rgba(74, 222, 74, .18);
+    --text: #f1f6f2;
+    --text-2: #c3d4c7;
+    --muted: #8ca493;
+    --muted-2: #64796b;
+    --warn: #ffd166;
+    --danger: #ff6b6e;
+    --radius: 14px;
+    --radius-sm: 9px;
+    --mono: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
   }
+
+  /* ================= base ================= */
   * { box-sizing: border-box; }
-  html,body { background: var(--bg); color: #fff; }
+  html, body { background: var(--bg); color: var(--text); }
   body {
     margin: 0;
-    font-family: Geist, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px; line-height: 1.55;
     min-height: 100vh;
     display: flex; flex-direction: column;
     overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
   }
-  /* ---- background FX (copied vibe from shop.fusionautomate.in) ---- */
-  .bg-fx { pointer-events:none; position:fixed; inset:0; z-index:-1; overflow:hidden; }
-  .animated-grid {
-    position:absolute; inset:0; opacity:.6;
-    background-image: linear-gradient(#4ade4a0d 1px, transparent 1px), linear-gradient(90deg, #4ade4a0d 1px, transparent 1px);
-    background-size:64px 64px;
-    animation: grid-pan 24s linear infinite;
+  ::selection { background: rgba(74, 222, 74, .28); }
+  :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; border-radius: 4px; }
+  a { color: inherit; }
+  svg { display: block; }
+  .container-page { width: min(1120px, 100% - 2.5rem); margin-inline: auto; }
+  .micro { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  code.inline {
+    font-family: var(--mono);
+    background: var(--surface-3); border: 1px solid var(--line);
+    padding: 2px 7px; border-radius: 6px; color: #a5f3c0; font-size: .85em;
   }
-  @keyframes grid-pan { to { background-position:64px 64px; } }
-  .glow-orb { position:absolute; border-radius:9999px; filter:blur(90px); animation: float-orb 16s ease-in-out infinite; }
-  @keyframes float-orb { 0%,100%{transform:translate(-6%,-4%) scale(1)} 50%{transform:translate(9%,7%) scale(1.18)} }
-  .corner { position:absolute; width:22px; height:22px; border-color:#4ade4a55; border-style:solid; border-width:0; opacity:.5; animation: corner-pulse 4s ease-in-out infinite; }
-  @keyframes corner-pulse { 50% { opacity:.9; } }
 
-  /* ---- layout ---- */
-  .container-page { width:min(1180px,100% - 2rem); margin-inline:auto; }
-  a { color:inherit; }
+  /* ================= background fx (static, calm) ================= */
+  .bg-fx {
+    pointer-events: none; position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(900px 440px at 50% -8%, rgba(74, 222, 74, .06), transparent 62%),
+      radial-gradient(760px 520px at 108% 108%, rgba(46, 139, 61, .05), transparent 64%);
+  }
+  .bg-fx .grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(74, 222, 74, .035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74, 222, 74, .035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.25) 55%, transparent 85%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.25) 55%, transparent 85%);
+  }
 
-  /* ---- header (matches shop) ---- */
+  /* ================= header ================= */
   header.site {
-    position:sticky; top:0; z-index:40;
-    border-bottom:1px solid var(--line);
-    background:rgba(2,6,4,.95); backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 40;
+    border-bottom: 1px solid var(--line);
+    background: rgba(7, 11, 8, .92);
+    backdrop-filter: blur(10px);
   }
-  .header-inner { display:flex; height:64px; align-items:center; justify-content:space-between; gap:1rem; }
-  .brand { display:flex; align-items:center; gap:.6rem; text-decoration:none; }
+  .header-inner { display: flex; height: 60px; align-items: center; justify-content: space-between; gap: 1rem; }
+  .brand { display: flex; align-items: center; gap: .65rem; text-decoration: none; user-select: none; }
   .brand-mark {
-    width:40px; height:32px; display:grid; place-items:center;
-    background:var(--lime); color:#081000; font-weight:800; font-size:13px; letter-spacing:.05em;
-    clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+    width: 38px; height: 30px; display: grid; place-items: center; flex: none;
+    background: var(--lime); color: #081000;
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 6px);
   }
-  .brand-name { font-size:13px; font-weight:800; letter-spacing:.16em; line-height:1.1; }
-  .brand-name span { color:var(--lime); }
-  .brand-sub { display:block; font-size:9px; font-weight:600; letter-spacing:.28em; color:var(--muted-2); }
-  nav.main { display:none; align-items:center; gap:1.5rem; font-size:11px; font-weight:600; letter-spacing:.16em; color:var(--text-2); }
-  nav.main a { text-decoration:none; padding-bottom:4px; white-space:nowrap; }
-  nav.main a:hover { color:var(--lime); }
-  nav.main a.active { color:var(--lime); border-bottom:2px solid var(--lime); }
-  @media(min-width:1024px){ nav.main{ display:flex; } }
-  .header-actions { display:flex; align-items:center; gap:.6rem; }
-  .header-actions .lime-btn { padding:.5rem .7rem; font-size:10px; }
+  .brand-name { font-size: 13px; font-weight: 800; letter-spacing: .14em; line-height: 1.15; white-space: nowrap; }
+  .brand-name span { color: var(--lime); }
+  .brand-sub { display: block; font-size: 9px; font-weight: 600; letter-spacing: .3em; color: var(--muted-2); }
+  .header-actions { display: flex; align-items: center; gap: .6rem; }
   .pill {
-    display:inline-flex; align-items:center; gap:.4rem;
-    border:1px solid var(--line); border-radius:6px; padding:.5rem .7rem;
-    font-size:10px; font-weight:800; letter-spacing:.14em; color:var(--text-2); background:transparent; cursor:pointer;
+    display: inline-flex; align-items: center; gap: .45rem;
+    border: 1px solid var(--line); border-radius: 999px; padding: .45rem .85rem;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-2); background: transparent; white-space: nowrap;
   }
+  .pill svg { width: 13px; height: 13px; color: var(--lime); }
+  @media (max-width: 640px) { .pill { display: none; } }
 
-  /* ---- input field ---- */
-  .input-group { margin-top:1rem; }
-  .input-group label { display:block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted-2); margin-bottom:.45rem; }
-  .url-input { width:100%; background:#020604; border:1px solid var(--line-soft); color:#fff; padding:.75rem .9rem; font-size:13px; font-family:ui-monospace, Menlo, Consolas, monospace; letter-spacing:.03em; }
-  .url-input:focus { outline:none; border-color:var(--lime); box-shadow:0 0 0 3px #4ade4a24; }
-
-  /* ---- buttons (lime-btn / ghost-btn from shop) ---- */
+  /* ================= buttons (shop-style, fusionautomate.in) ================= */
   .lime-btn {
-    background:var(--lime); color:#081000; letter-spacing:.06em; text-transform:uppercase;
-    clip-path:polygon(8px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
-    font-weight:800; border:0; cursor:pointer; position:relative; overflow:hidden;
-    padding:.9rem 1.6rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem;
-    transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,filter .3s;
-    text-decoration:none;
+    background: var(--lime); color: #081000;
+    font-weight: 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+    border: 0; cursor: pointer; text-decoration: none; position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    padding: .85rem 1.5rem; white-space: nowrap;
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+    transition: transform .25s cubic-bezier(.22, 1, .36, 1), box-shadow .25s, filter .25s;
   }
-  .lime-btn:after{
-    content:""; pointer-events:none; position:absolute; top:0; bottom:0; left:-60%; width:40%;
-    background:linear-gradient(105deg,transparent, #ffffff66, transparent);
-    transform:skew(-20deg); animation:cta-shine 2.8s ease-in-out infinite;
+  .lime-btn::after {
+    content: ""; pointer-events: none; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .4), transparent);
+    transform: skew(-20deg); animation: cta-shine 3.2s ease-in-out infinite;
   }
-  @keyframes cta-shine { 0%{left:-60%} 55%,100%{left:130%} }
-  .lime-btn:hover { transform:translateY(-2px); box-shadow:0 14px 34px -12px #4ade4a8c; }
-  .lime-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+  @keyframes cta-shine { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+  .lime-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+  .lime-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
   .ghost-btn {
-    color:#cfe6d2; letter-spacing:.08em; text-transform:uppercase;
-    clip-path:polygon(7px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
-    background:linear-gradient(135deg,#04100af5,#030906f5);
-    border:1px solid var(--line-soft); font-weight:700; cursor:pointer;
-    padding:.9rem 1.5rem; font-size:11px; display:inline-flex; align-items:center; gap:.5rem; white-space:nowrap;
-    transition:transform .25s, border-color .25s, box-shadow .25s, color .25s;
-    text-decoration:none;
+    background: rgba(7, 11, 8, .6); color: var(--text-2);
+    font-weight: 700; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    border: 1px solid var(--line-strong); cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    padding: .85rem 1.4rem; white-space: nowrap;
+    clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 7px);
+    transition: border-color .2s, color .2s, background .2s;
   }
-  .ghost-btn:hover { border-color:var(--lime); color:#fff; background:#4ade4a1a; transform:translateY(-2px); }
-  .ghost-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
-  .btn-sm { padding:.55rem .9rem; font-size:10px; }
+  .ghost-btn:hover { border-color: var(--lime); color: #fff; background: var(--lime-soft); }
+  .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-sm { padding: .55rem .95rem; font-size: 10px; }
+  .btn-icon {
+    width: 34px; height: 34px; padding: 0; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid transparent; color: var(--muted-2); cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .btn-icon:hover { color: var(--danger); border-color: var(--line-strong); background: rgba(255, 107, 110, .07); }
+  .btn-icon svg { width: 14px; height: 14px; }
 
-  /* ---- hero ---- */
+  /* ================= hero ================= */
+  .hero { padding: 3rem 0 1.6rem; }
   .eyebrow {
-    margin:0 0 1rem; font-size:11px; font-weight:700; letter-spacing:.22em; color:var(--muted);
-    text-transform:uppercase;
+    margin: 0 0 1rem; display: flex; align-items: center; gap: .6rem;
+    font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
   }
-  .eyebrow b { color:var(--lime); font-weight:800; }
-  .hero { padding:3.2rem 0 1.6rem; position:relative; }
+  .eyebrow::before { content: ""; width: 26px; height: 1px; background: var(--lime); }
+  .eyebrow b { color: var(--lime); font-weight: 800; }
   .hero h1 {
-    margin:0 0 .8rem; font-family: Oxanium, Geist, system-ui, sans-serif;
-    font-size:clamp(2rem, 5vw, 3.4rem); line-height:1.02; letter-spacing:-.02em; font-weight:800;
+    margin: 0 0 .9rem;
+    font-family: Oxanium, system-ui, sans-serif;
+    font-size: clamp(1.9rem, 4.4vw, 2.9rem); line-height: 1.05; letter-spacing: -.02em; font-weight: 800;
   }
-  .hero h1 .lime { color:var(--lime); }
-  .hero p.lead { margin:0; max-width:62ch; color:var(--text-2); line-height:1.6; font-size:15px; }
-  .hero p.lead code, code.inline {
-    font-family:ui-monospace, Menlo, Consolas, monospace;
-    background:#06130b; border:1px solid var(--line); padding:2px 7px; border-radius:6px; color:#a5f3c0; font-size:.85em;
-  }
-  .badge-row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.1rem; }
-  .t-badge {
-    font-size:10px; font-weight:800; letter-spacing:.16em; text-transform:uppercase;
-    border:1px solid var(--line-soft); color:var(--lime); background:#4ade4a0f;
-    padding:.45rem .8rem; clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
-  }
-  .t-badge.dim { color:var(--muted); background:transparent; }
+  .hero h1 .lime { color: var(--lime); }
+  .hero p.lead { margin: 0; max-width: 64ch; color: var(--text-2); line-height: 1.65; font-size: 15px; }
+  .hero p.lead b { color: var(--text); }
 
-  /* ---- stats (matches THE NUMBERS) ---- */
-  .stats { display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--line); background:var(--card); margin-top:1.6rem; }
-  .stat { padding:1rem 1.1rem; border-right:1px solid var(--line); }
-  .stat:last-child{ border-right:0; }
-  .stat .n { font-family:Oxanium, system-ui, sans-serif; font-weight:800; font-size:1.25rem; color:var(--lime); }
-  .stat .l { font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-top:.25rem; }
-  @media(max-width:640px){ .stats{grid-template-columns:1fr} .stat{border-right:0; border-bottom:1px solid var(--line)} .stat:last-child{border-bottom:0} }
-
-  /* ---- tool grid: removed kv block and pathsSection from panel 02 ---- */
-  .tool-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1rem; }
-  @media(max-width:860px){ .tool-grid{grid-template-columns:1fr} }
+  /* ================= panels ================= */
+  .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.25rem; }
+  @media (max-width: 860px) { .layout-grid { grid-template-columns: 1fr; } }
   .panel {
-    background:linear-gradient(135deg, #04100af5, #030906f5);
-    border:1px solid var(--line); padding:1.2rem;
-    position:relative;
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.35rem; position: relative; overflow: hidden;
   }
-  .panel:before {
-    content:""; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg, var(--lime), transparent 70%);
-    opacity:.7;
+  .panel::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, rgba(74, 222, 74, .55), transparent 65%);
   }
-  .panel h3 { margin:0 0 .3rem; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-2); }
-  .panel h3 i { color:var(--lime); font-style:normal; }
-  .panel .hint { margin:0 0 .9rem; font-size:13px; color:var(--muted); line-height:1.5; }
+  .panel > h3 { margin: 0 0 .35rem; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-2); font-weight: 800; }
+  .panel > h3 i { color: var(--lime); font-style: normal; }
+  .panel .hint { margin: 0 0 1rem; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .panel .hint b { color: var(--text-2); }
+  section.queue-sec { margin-top: 1.25rem; }
 
-  #dropzone {
-    border:1px dashed #2a6a42; border-radius:2px;
-    background:#020604; padding:2.6rem 1.2rem; text-align:center; cursor:pointer;
-    transition:border-color .2s, background .2s, box-shadow .2s;
+  /* ================= dropzone ================= */
+  .dropzone {
+    border: 1.5px dashed var(--line-strong); border-radius: 12px;
+    background: rgba(7, 11, 8, .5); padding: 2.4rem 1.2rem; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s, box-shadow .2s;
   }
-  #dropzone:hover, #dropzone.dragover {
-    border-color:var(--lime); background:#06130b; box-shadow:0 0 0 3px #4ade4a24;
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--lime); background: rgba(74, 222, 74, .05);
+    box-shadow: 0 0 0 4px var(--lime-ring);
   }
-  #dropzone .big { font-family:Oxanium, system-ui, sans-serif; font-size:17px; font-weight:700; }
-  #dropzone .big span { color:var(--lime); }
-  #dropzone .small { color:var(--muted-2); font-size:13px; margin-top:.5rem; }
-  #dropzone .drop-ic {
-    width:44px; height:44px; margin:0 auto .8rem; display:grid; place-items:center;
-    background:#4ade4a14; border:1px solid var(--line-soft); color:var(--lime); font-size:20px;
-    clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+  .dropzone .drop-ic {
+    width: 46px; height: 46px; margin: 0 auto .9rem; display: grid; place-items: center;
+    background: var(--lime-soft); border: 1px solid rgba(74, 222, 74, .3);
+    border-radius: 12px; color: var(--lime);
   }
+  .dropzone .drop-ic svg { width: 22px; height: 22px; }
+  .dropzone .big { font-family: Oxanium, system-ui, sans-serif; font-size: 16px; font-weight: 700; }
+  .dropzone .big span { color: var(--lime); }
+  .dropzone .small { color: var(--muted); font-size: 12.5px; margin-top: .5rem; font-family: var(--mono); letter-spacing: .02em; }
 
-  .kv { display:grid; gap:.6rem; margin-top:1rem; font-size:13px; color:var(--muted); }
-  .kv div { display:flex; gap:.6rem; align-items:flex-start; line-height:1.5; }
-  .kv b { color:var(--text-2); }
-  .dot { color:var(--lime); font-weight:800; }
+  /* ================= inputs ================= */
+  .input-group { margin-top: 1rem; }
+  .input-group label { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: .45rem; font-weight: 600; }
+  .field {
+    width: 100%; background: var(--bg); border: 1px solid var(--line-strong);
+    color: var(--text); padding: .7rem .85rem; font-size: 13px;
+    font-family: var(--mono); letter-spacing: .02em; border-radius: var(--radius-sm);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field:focus { outline: none; border-color: var(--lime); box-shadow: 0 0 0 3px var(--lime-ring); }
+  textarea.field { resize: vertical; min-height: 5.5rem; }
+  .btn-row { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1.1rem; }
 
-  .btn-row { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1rem; }
-
-  #fileList { margin-top:1rem; display:grid; gap:.7rem; }
+  /* ================= queue cards ================= */
+  #fileList { display: grid; gap: .65rem; }
   .card {
-    background:var(--card); border:1px solid var(--line);
-    padding:.9rem; display:grid; grid-template-columns:72px 1fr auto; gap:.9rem; align-items:center;
-    transition:border-color .2s;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: .8rem .9rem;
+    display: grid; grid-template-columns: 56px 1fr auto; gap: .9rem; align-items: center;
+    transition: border-color .2s, background .2s;
   }
-  .card:hover { border-color:#2a6a42; }
-  .card img {
-    width:72px; height:72px; object-fit:contain;
-    background:#020604; border:1px solid var(--line); border-radius:2px;
+  .card:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  .card .thumb {
+    width: 56px; height: 56px; border-radius: 9px; overflow: hidden;
+    background: var(--bg); border: 1px solid var(--line);
+    display: grid; place-items: center; color: var(--muted-2);
   }
-  .name { font-weight:700; font-size:13.5px; word-break:break-all; color:#fff; }
-  .name .arrow { color:var(--lime); }
-  .name .new { color:var(--lime); }
-  .meta { color:var(--muted); font-size:12.5px; margin-top:5px; font-family:ui-monospace, Menlo, monospace; }
-  .meta .save { color:var(--lime); font-weight:800; }
-  .meta .save.larger { color:#ff6568; }
-  .status { font-size:11px; margin-top:5px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
-  .status.converting { color:#ffd236; }
-  .status.done { color:var(--lime); }
-  .status.error { color:#ff6568; }
+  .card .thumb img { width: 100%; height: 100%; object-fit: contain; }
+  .card .thumb svg { width: 20px; height: 20px; }
+  .card .info { min-width: 0; }
+  .name { font-weight: 700; font-size: 13.5px; word-break: break-all; color: var(--text); }
+  .name .arrow { color: var(--lime); }
+  .name .new { color: var(--lime); }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 4px; font-family: var(--mono); }
+  .meta .save { color: var(--lime); font-weight: 700; }
+  .meta .save.larger { color: var(--danger); }
+  .card .actions { display: flex; align-items: center; gap: .45rem; }
   .empty {
-    border:1px dashed var(--line-soft); padding:1.4rem; text-align:center; color:var(--muted-2);
-    font-size:13px; background:#02060466;
+    border: 1.5px dashed var(--line); border-radius: 12px; padding: 1.8rem 1rem;
+    text-align: center; color: var(--muted-2); font-size: 13px; background: rgba(7, 11, 8, .4);
   }
+  .empty svg { width: 26px; height: 26px; margin: 0 auto .6rem; color: var(--muted-2); }
+
+  /* status chips */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 7px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .chip .spin, .chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .chip.decoding, .chip.encoding { background: rgba(255, 209, 102, .08); color: var(--warn); }
+  .chip.decoding .spin, .chip.encoding .spin {
+    background: transparent; border: 1.5px solid rgba(255, 209, 102, .25); border-top-color: var(--warn);
+    animation: spin .8s linear infinite;
+  }
+  .chip.done { background: var(--lime-soft); color: var(--lime); }
+  .chip.done .dot { background: var(--lime); }
+  .chip.error { background: rgba(255, 107, 110, .08); color: var(--danger); }
+  .chip.error .dot { background: var(--danger); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ================= summary ================= */
   #summary {
-    margin-top:1rem; background:#4ade4a0f; border:1px solid #1f6a38;
-    padding:.9rem 1rem; font-size:13.5px; display:none; color:var(--text-2);
+    margin-top: 1.1rem; border: 1px solid rgba(74, 222, 74, .3); border-radius: 10px;
+    background: var(--lime-soft); padding: .85rem 1rem; font-size: 13.5px;
+    display: none; color: var(--text-2); line-height: 1.6;
   }
-  #summary b { color:var(--lime); }
-  #summary.warning { background:#2a0e0e55; border-color:#7f1d1d; }
-  #summary.warning b { color:#ff6568; }
-  #summary.warning b.count { color:#fff; }
+  #summary b { color: var(--lime); }
+  #summary.warning { background: rgba(255, 107, 110, .07); border-color: rgba(255, 107, 110, .35); }
+  #summary.warning b { color: var(--danger); }
+  #summary.warning b.count { color: var(--text); }
+  #summary .note { margin-top: 6px; font-size: 12px; color: var(--muted); }
 
-  /* ---- rules modal ---- */
+  /* ================= rules modal ================= */
   #rulesModal {
-    position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
-    background:#020604cc; backdrop-filter:blur(6px);
+    position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center;
+    background: rgba(4, 7, 5, .75); backdrop-filter: blur(8px); padding: 1rem;
   }
-  #rulesModal.open { display:flex; }
-  #rulesModal .panel {
-    background:#04100a; border:1px solid var(--line);
-    padding:1.4rem; max-width:560px; width:min(90%,620px);
+  #rulesModal.open { display: flex; }
+  #rulesModal .modal-panel {
+    background: var(--surface-2); border: 1px solid var(--line-strong);
+    border-radius: var(--radius); padding: 1.5rem;
+    width: min(100%, 600px); max-height: min(86vh, 700px); overflow: auto;
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .7);
   }
-  #rulesModal h3 { margin:0 0 .3rem; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-2); }
-  #rulesModal p { font-size:13px; color:var(--muted); }
-  #rulesModal ul { margin:0; padding:0 0 0 1.2rem; color:var(--text-2); font-size:13px; line-height:1.6; }
-  @media(max-width:480px){ #rulesModal .panel { padding:1rem; } }
+  #rulesModal h3 { margin: 0 0 .2rem; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-2); font-weight: 800; }
+  #rulesModal .modal-sub { margin: 0 0 1rem; font-size: 12.5px; color: var(--muted); }
+  .fmt-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0 0 1rem; }
+  .fmt-table td { padding: .55rem .7rem; border: 1px solid var(--line); color: var(--text-2); vertical-align: top; }
+  .fmt-table td:first-child { color: var(--muted); font-size: 12px; white-space: nowrap; font-weight: 700; }
+  .fmt-table .ext { font-family: var(--mono); color: #a5f3c0; }
+  #rulesModal ul { margin: 0 0 1rem; padding: 0 0 0 1.15rem; color: var(--text-2); font-size: 13px; line-height: 1.7; }
+  #rulesModal ul b { color: var(--text); }
 
-  footer.site { margin-top:2.5rem; border-top:1px solid var(--line); background:#020604; }
-  .footer-grid-bg { background-image:radial-gradient(#4ade4a1c 1px, transparent 1px); background-size:22px 22px; }
-  .foot-inner { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; padding:1.4rem 0; }
-  .foot-links { display:flex; flex-wrap:wrap; gap:1.1rem; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-  .foot-links a { text-decoration:none; } .foot-links a:hover{ color:var(--lime); }
-  .copy { color:var(--muted-3); font-size:12px; }
-  .tip { margin-top:.9rem; color:var(--muted-3); font-size:12px; text-align:center; padding-bottom:1.2rem; }
+  /* ================= toasts ================= */
+  .toasts { position: fixed; right: 1rem; bottom: 1rem; z-index: 120; display: grid; gap: .5rem; max-width: min(92vw, 380px); }
+  .toast {
+    display: flex; align-items: flex-start; gap: .6rem;
+    background: var(--surface-3); border: 1px solid var(--line-strong); border-left: 3px solid var(--lime);
+    border-radius: 10px; padding: .7rem .9rem; font-size: 13px; color: var(--text-2);
+    opacity: 0; transform: translateX(14px); transition: opacity .3s, transform .3s;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, .6);
+  }
+  .toast.in { opacity: 1; transform: translateX(0); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast svg { width: 15px; height: 15px; flex: none; margin-top: 2px; color: var(--lime); }
+  .toast.error svg { color: var(--danger); }
+
+  /* ================= footer ================= */
+  footer.site { margin-top: 2.6rem; border-top: 1px solid var(--line); background: rgba(7, 11, 8, .6); }
+  .foot-inner { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; padding: 1.3rem 0; }
+  .copy { color: var(--muted-2); font-size: 12px; }
+
+  /* mobile card layout */
+  @media (max-width: 640px) {
+    .card { grid-template-columns: 48px 1fr; }
+    .card .thumb { width: 48px; height: 48px; }
+    .card .actions { grid-column: 1 / -1; justify-content: flex-end; padding-top: .2rem; }
+  }
 </style>
 </head>
 <body>
 
-<div class="bg-fx" aria-hidden="true">
-  <div class="animated-grid"></div>
-  <div class="glow-orb" style="left:-8%; top:-6%; height:360px; width:360px; background:rgba(74,222,74,.08)"></div>
-  <div class="glow-orb" style="right:-10%; top:30%; height:420px; width:420px; background:rgba(15,61,38,.55); animation-delay:-7s"></div>
-  <div class="glow-orb" style="bottom:-14%; left:28%; height:360px; width:360px; background:rgba(74,222,74,.06); animation-delay:-3s"></div>
-  <span class="corner" style="left:12px; top:76px; border-left-width:1px; border-top-width:1px;"></span>
-  <span class="corner" style="right:12px; top:76px; border-right-width:1px; border-top-width:1px;"></span>
-</div>
+<div class="bg-fx" aria-hidden="true"><div class="grid-overlay"></div></div>
 
 <header class="site">
   <div class="container-page header-inner">
-    <div class="brand" style="cursor:default">
-      <span class="brand-mark">⇄</span>
-      <span class="brand-name">PNG · JPEG <span>→ WEBP</span><span class="brand-sub">LOCAL CONVERTER · PRIVATE</span></span>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13M14 3.5 17.5 7 14 10.5"/><path d="M20 17H7M10 13.5 6.5 17l3.5 3.5"/></svg>
+      </span>
+      <span class="brand-name">IMAGE <span>→ WEBP</span><span class="brand-sub">LOCAL CONVERTER · PRIVATE</span></span>
     </div>
     <div class="header-actions">
-      <span class="pill">100% LOCAL · NO UPLOAD</span>
-      <button class="lime-btn" id="showRulesBtn">Rules</button>
+      <span class="pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.4 7 9.6 4-1.2 7-5.1 7-9.6V6l-7-3Z"/><path d="m9.2 12 2 2 3.6-3.8"/></svg>
+        100% local · no upload
+      </span>
+      <button class="ghost-btn btn-sm" id="showRulesBtn" type="button">Rules</button>
     </div>
   </div>
 </header>
@@ -271,125 +337,187 @@
 <main class="container-page" style="flex:1">
   <section class="hero">
     <p class="eyebrow">LOCAL TOOL <b>/ PRIVATE · OFFLINE</b></p>
-    <h1>Convert. Optimize.<br /><span class="lime">Upload-ready WebP.</span></h1>
-    <p class="lead">Select multiple PNG/JPEG files → <b>smart-encoded WebP</b> (smallest file at visually-lossless quality, Cloudinary-style) → filenames auto-renamed with <code class="inline">spaces/dashes → underscores</code>, ready for <code class="inline">/uploads/</code>.</p>
-    <div class="badge-row">
-      <span class="t-badge">● 100% local · no upload</span>
-      <span class="t-badge dim">PNG + JPEG → WebP</span>
-      <span class="t-badge dim">Smart encode 75 → 93</span>
-      <span class="t-badge dim">PSNR ≥ 40 dB</span>
-      <span class="t-badge dim">Auto /uploads/ paths</span>
-    </div>
-
-    <div class="stats">
-      <div class="stat"><div class="n" id="statFiles">0</div><div class="l">Files converted</div></div>
-      <div class="stat"><div class="n" id="statSaved">—</div><div class="l" id="statSavedLabel">Size change</div></div>
-      <div class="stat"><div class="n">PRIVATE</div><div class="l">Stays on your machine</div></div>
-    </div>
+    <h1>Any image in.<br /><span class="lime">Smarter WebP out.</span></h1>
+    <p class="lead">Drop PNG, JPEG, <b>HEIC</b>, TIFF and more — smart-encoded WebP, converted entirely in your browser. Nothing is uploaded or stored.</p>
   </section>
 
-  <section class="tool-grid">
+  <section class="layout-grid">
     <div class="panel">
-      <h3><i>01 /</i> INPUT — PNG / JPEG</h3>
-      <p class="hint">Drag & drop <b>PNG or JPEG/JPG</b> or browse. Everything is encoded in-browser — nothing leaves your computer.</p>
-      <div id="dropzone" title="Click or drop files">
-        <div class="drop-ic">⇪</div>
-        <div class="big">Drag & drop <span>PNG / JPEG</span> here</div>
-        <div class="small">or click to browse .png / .jpg / .jpeg · multiple files supported · stays on your machine</div>
-        <input type="file" id="fileInput" accept=".png,image/png,.jpg,.jpeg,image/jpeg" multiple hidden />
+      <h3><i>01 /</i> INPUT</h3>
+      <div class="dropzone" id="dropzone" title="Click or drop files" role="button" tabindex="0" aria-label="Add images">
+        <div class="drop-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.4 8.3"/><path d="M12 12v9"/><path d="m8.5 15.5 3.5-3.5 3.5 3.5"/></svg>
+        </div>
+        <div class="big">Drag &amp; drop <span>images</span> here</div>
+        <div class="small">or click to browse — heic · tiff · png · jpeg · gif · bmp · avif · webp · svg · ico</div>
+        <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif,.bmp,.webp,.avif,.ico,.svg,.heic,.heif,.hif,.tif,.tiff,image/png,image/jpeg,image/gif,image/bmp,image/webp,image/avif,image/heic,image/heif,image/tiff,image/svg+xml,image/x-icon" multiple hidden />
       </div>
       <div class="btn-row">
-        <button class="lime-btn" id="downloadAllBtn" disabled>⬇ Download All</button>
+        <button class="lime-btn" id="downloadAllBtn" disabled>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m6.5 10.5 5.5 5.5 5.5-5.5"/><path d="M5 20h14"/></svg>
+          Download all
+        </button>
         <button class="ghost-btn" id="clearBtn" disabled>Clear</button>
       </div>
       <div id="summary"></div>
     </div>
 
     <div class="panel">
-      <h3><i>02 /</i> SMART ENCODE + OUTPUT</h3>
-      <p class="hint">Tries qualities 75 → 93 and keeps the <b>smallest file</b> proven visually lossless (PSNR ≥ 40 dB). Falls back to 100 only if needed.</p>
+      <h3><i>02 /</i> OUTPUT</h3>
+      <p class="hint">Smallest file at visually-lossless quality (PSNR ≥ 40 dB).</p>
 
       <div class="input-group">
         <label for="outputPrefix">Output path prefix</label>
-        <input type="text" id="outputPrefix" class="url-input" value="/uploads/" placeholder="e.g. /uploads/" />
+        <input type="text" id="outputPrefix" class="field" value="/uploads/" placeholder="e.g. /uploads/" />
+      </div>
+
+      <div class="input-group">
+        <label for="pathsList">Copied output paths</label>
+        <textarea id="pathsList" class="field" readonly rows="4" placeholder="Output paths appear here after conversion."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="lime-btn btn-sm" id="copyPathsBtn" disabled>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+          Copy paths
+        </button>
+        <button class="ghost-btn btn-sm" id="downloadAllBtn2" disabled>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m6.5 10.5 5.5 5.5 5.5-5.5"/><path d="M5 20h14"/></svg>
+          Download all
+        </button>
       </div>
     </div>
   </section>
 
-  <section style="margin-top:1rem">
+  <section class="queue-sec">
     <div class="panel">
-      <h3><i>03 /</i> QUEUE — CONVERSION STATUS</h3>
-      <p class="hint">Per-file preview, size delta, quality + fidelity readout, and individual download.</p>
-      <div id="fileList"><div class="empty">No files yet — drop PNG/JPEG files above to start smart-encoding.</div></div>
+      <h3><i>03 /</i> QUEUE</h3>
+      <div id="fileList"></div>
     </div>
   </section>
 
-  <div class="tip">Just double-click this file — works fully offline. Nothing leaves your computer.</div>
-
   <!-- rules modal -->
-  <div id="rulesModal">
-    <div class="panel">
-      <h3>Conversion rules</h3>
+  <div id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="modal-panel">
+      <h3 id="rulesTitle">Conversion rules</h3>
+      <p class="modal-sub">Supported inputs, rename logic, and the privacy model.</p>
+
+      <table class="fmt-table">
+        <tr>
+          <td>Native</td>
+          <td><span class="ext">png · jpg/jpeg · gif · bmp · webp · avif · ico · svg</span> — decoded directly by your browser (AVIF needs a 2020+ browser).</td>
+        </tr>
+        <tr>
+          <td>HEIC / HEIF</td>
+          <td><span class="ext">.heic · .heif · .hif</span> — iPhone photos &amp; modern cameras, via the bundled libheif decoder. Multi-image containers are split into one WebP per image.</td>
+        </tr>
+        <tr>
+          <td>TIFF</td>
+          <td><span class="ext">.tif · .tiff</span> — via the bundled TIFF decoder; first page of multi-page files.</td>
+        </tr>
+      </table>
+
       <ul>
-        <li><b>Inputs:</b> .png + .jpg / .jpeg → .webp</li>
-        <li><b>Rename rule:</b> My Photo-1.png → My_Photo_1.webp · photo-2.jpg → photo_2.webp</li>
-        <li><b>Paths:</b> copied as /uploads/Your_File.webp for direct use in your project.</li>
-        <li><b>Privacy:</b> just double-click this file — works fully offline.</li>
+        <li><b>Rename rule:</b> <span class="ext" style="font-family:var(--mono)">My Photo-1.png → My_Photo_1.webp</span> — spaces &amp; dashes become underscores, unsafe characters are sanitized.</li>
+        <li><b>Paths:</b> copied as <span class="ext" style="font-family:var(--mono)">/uploads/Your_File.webp</span> — edit the prefix in Output.</li>
+        <li><b>Privacy:</b> there is no server. Files are read straight from disk into browser memory, converted locally, and held only until you clear the queue or close the tab. Nothing is uploaded, logged, or stored anywhere.</li>
+        <li><b>Offline:</b> decoders are bundled in the <span class="ext" style="font-family:var(--mono)">vendor/</span> folder — no internet needed.</li>
       </ul>
+
       <div class="btn-row">
-        <button class="ghost-btn" id="closeRulesBtn">Got it</button>
+        <button class="ghost-btn" id="closeRulesBtn" type="button">Got it</button>
       </div>
     </div>
   </div>
 </main>
 
-<footer class="site footer-grid-bg">
+<footer class="site">
   <div class="container-page foot-inner">
-    <div class="brand" style="cursor:default">
-      <span class="brand-mark" style="width:34px;height:28px;font-size:14px">⇄</span>
-      <span class="brand-name" style="font-size:12px">PNG · JPEG <span>→ WEBP</span></span>
+    <div class="brand">
+      <span class="brand-mark" style="width:30px;height:30px" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h13M14 3.5 17.5 7 14 10.5"/><path d="M20 17H7M10 13.5 6.5 17l3.5 3.5"/></svg>
+      </span>
+      <span class="brand-name" style="font-size:12px">IMAGE <span>→ WEBP</span></span>
     </div>
-    <div class="copy">© 2026 · Local tool — private by design · Nothing leaves your computer</div>
+    <div class="copy">© 2026 · Local tool — private by design · No server · No storage · No tracking</div>
   </div>
 </footer>
 
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<noscript><div style="padding:1rem;text-align:center;color:#ffd166">This tool needs JavaScript — all conversion runs locally in your browser.</div></noscript>
+
+<!-- local decoders: pako → UTIF (TIFF), heic2any (HEIC). Order matters. -->
+<script src="vendor/pako.min.js"></script>
+<script src="vendor/UTIF.js"></script>
+<script src="vendor/heic2any.min.js"></script>
+
 <script>
+'use strict';
+
+/* ============================== constants ============================== */
+
+const ACCEPT_EXTS = ['png','jpg','jpeg','gif','bmp','webp','avif','ico','svg','heic','heif','hif','tif','tiff'];
+const KNOWN_MIMES = new Set(['image/png','image/jpeg','image/gif','image/bmp','image/webp','image/avif',
+  'image/svg+xml','image/x-icon','image/vnd.microsoft.icon','image/heic','image/heif',
+  'image/heic-sequence','image/heif-sequence','image/tiff']);
+
+// Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
+const WEBP_QUALITY = 1.0;                              // fallback only
+const SMART_QUALITIES = [0.75, 0.8, 0.85, 0.9, 0.93];  // tried low → high, first PSNR pass wins
+const PSNR_THRESHOLD_DB = 40;                          // >= 40 dB ≈ visually lossless
+const PSNR_SAMPLE_MAX = 2000000;                       // compare on a downscaled copy (≤2MP)
+
+/* ============================== dom refs ============================== */
+
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 const clearBtn = document.getElementById('clearBtn');
 const summary = document.getElementById('summary');
-const statFiles = document.getElementById('statFiles');
-const statSaved = document.getElementById('statSaved');
 const outputPrefixInput = document.getElementById('outputPrefix');
+const toasts = document.getElementById('toasts');
 
-// Current output path prefix (default "/uploads/").
-let outputPathPrefix = '/uploads/';
-outputPrefixInput.addEventListener('input', () => {
-  let v = outputPrefixInput.value.trim();
-  if (v === '') v = '/uploads/';
-  if (v === '/') v = '/uploads/';
-  // keep only a leading slash, strip trailing slashes
-  v = '/' + v.replace(/^\/+|\/+$/g, '');
-  outputPathPrefix = v + '/';
-  updateSummary();
-});
+const ICON = {
+  download: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m6.5 10.5 5.5 5.5 5.5-5.5"/><path d="M5 20h14"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4.5 18 5-5 3.5 3.5L16 13l3.5 3.5"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18"/></svg>'
+};
 
-// Output path helper: always ensures trailing slash on prefix.
-function getOutputPath(name) {
-  let p = outputPathPrefix;
-  if (name.startsWith('/')) name = name.slice(1);
-  return p + name;
+/* ============================== state ============================== */
+
+// { id, origName, newName, origSize, file, sourceBlob, previewUrl, status, webpBlob, webpSize, url, detail, note, error }
+// status: decoding → encoding → done | error
+let items = [];
+
+/* ============================== helpers ============================== */
+
+function uid() {
+  return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
 }
 
-const WEBP_QUALITY = 1.0; // fallback only — smart encode picks per-file quality below
-// Cloudinary-style smart encoding: smallest file at visually-lossless fidelity.
-const SMART_QUALITIES = [0.75, 0.8, 0.85, 0.9, 0.93]; // tried low → high, first PSNR pass wins (smallest file)
-const PSNR_THRESHOLD_DB = 40;   // >= 40 dB ≈ visually lossless
-const PSNR_SAMPLE_MAX = 2000000; // compare on a downscaled copy (≤2MP) to keep it fast
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-let items = []; // { id, origName, newName, origSize, webpBlob, webpSize, url, status }
+function fmt(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = (type === 'error' ? ICON.alert : ICON.check) + '<span>' + escapeHtml(msg) + '</span>';
+  toasts.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('in'));
+  setTimeout(() => { el.classList.remove('in'); setTimeout(() => el.remove(), 320); }, 4500);
+}
 
 // Rename: "my photo-1.png" -> "my_photo_1.webp" (spaces & dashes -> underscores)
 function toWebpName(origName) {
@@ -403,99 +531,398 @@ function toWebpName(origName) {
   return base + '.webp';
 }
 
-function fmt(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+// Current output path prefix (default "/uploads/").
+let outputPathPrefix = '/uploads/';
+outputPrefixInput.addEventListener('input', () => {
+  let v = outputPrefixInput.value.trim();
+  if (v === '' || v === '/') v = '/uploads/';
+  v = '/' + v.replace(/^\/+|\/+$/g, ''); // keep a single leading slash, strip trailing slashes
+  outputPathPrefix = v + '/';
+  updateSummary();
+});
+
+function getOutputPath(name) {
+  let p = outputPathPrefix;
+  if (name.startsWith('/')) name = name.slice(1);
+  return p + name;
 }
 
+/* ============================== format detection ============================== */
+
+function extOf(name) {
+  const m = /\.([a-z0-9]+)$/i.exec(name);
+  return m ? m[1].toLowerCase() : '';
+}
+
+function isHeicFile(f) {
+  return ['heic','heif','hif'].includes(extOf(f.name)) || /^image\/hei[cf]/i.test(f.type);
+}
+function isTiffFile(f) {
+  return ['tif','tiff'].includes(extOf(f.name)) || /^image\/tiff/i.test(f.type);
+}
+function isSupportedFile(f) {
+  return ACCEPT_EXTS.includes(extOf(f.name)) || KNOWN_MIMES.has(f.type);
+}
+
+/* ============================== decoding ============================== */
+
+// Decode any supported file into one or more source blobs (PNG for libheif/UTIF output,
+// the original file for natively-decoded formats). Multi-image HEIC → array of blobs.
+async function decodeSource(file) {
+  if (isHeicFile(file)) {
+    if (typeof heic2any === 'undefined') {
+      throw new Error('HEIC decoder not found — vendor/heic2any.min.js is missing.');
+    }
+    const out = await heic2any({ blob: file, toType: 'image/png' });
+    const blobs = Array.isArray(out) ? out : [out];
+    if (!blobs.length) throw new Error('No image found in this HEIC container.');
+    return blobs.map(b => ({ blob: b, from: 'heic' }));
+  }
+
+  if (isTiffFile(file)) {
+    if (typeof UTIF === 'undefined') {
+      throw new Error('TIFF decoder not found — vendor/UTIF.js is missing.');
+    }
+    const buf = await file.arrayBuffer();
+    const ifds = UTIF.decode(buf);
+    if (!ifds.length) throw new Error('No image found in this TIFF file.');
+    UTIF.decodeImage(buf, ifds[0], ifds); // first page of multi-page TIFFs
+    const w = ifds[0].width, h = ifds[0].height;
+    const rgba = UTIF.toRGBA8(ifds[0]);
+    const cnv = document.createElement('canvas');
+    cnv.width = w; cnv.height = h;
+    cnv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), w, h), 0, 0);
+    const blob = await canvasToBlob(cnv, 'image/png');
+    return [{ blob, from: 'tiff' }];
+  }
+
+  // Native browser decode: PNG, JPEG, GIF, BMP, WebP, AVIF, ICO, SVG
+  return [{ blob: file, from: 'native' }];
+}
+
+function canvasToBlob(canvas, type, q) {
+  return new Promise((res, rej) =>
+    canvas.toBlob(b => b ? res(b) : rej(new Error('encoding failed')), type, q)
+  );
+}
+
+function loadImage(blob) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+    img.src = url;
+  });
+}
+
+function friendlyError(err, item) {
+  const m = err && err.message ? err.message : '';
+  if (/HEIC decoder not found/.test(m)) return 'HEIC decoder missing — keep the vendor/ folder next to index.html';
+  if (/TIFF decoder not found/.test(m)) return 'TIFF decoder missing — keep the vendor/ folder next to index.html';
+  if (/decode failed|Could not read/.test(m)) {
+    return 'Could not decode — file may be corrupt, or this browser can\u2019t display the format (AVIF needs a 2020+ browser)';
+  }
+  return m || 'Conversion failed';
+}
+
+/* ============================== queue ============================== */
+
 dropzone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', e => handleFiles(e.target.files));
+dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener('change', e => { addFiles(e.target.files); fileInput.value = ''; });
 ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
   e.preventDefault(); dropzone.classList.add('dragover');
 }));
 ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
   e.preventDefault(); dropzone.classList.remove('dragover');
 }));
-dropzone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+dropzone.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+// Prevent the browser from navigating away when files are dropped outside the dropzone
+['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
 
-function handleFiles(fileListObj) {
-  const files = [...fileListObj].filter(f => /\.(png|jpe?g)$/i.test(f.name) || /^image\/(png|jpeg)$/i.test(f.type));
-  const rejected = fileListObj.length - files.length;
-  if (rejected > 0) alert(rejected + ' non-PNG/JPEG file(s) skipped. Please select .png or .jpg files only.');
+function addFiles(list) {
+  const files = [...list].filter(isSupportedFile);
+  const rejected = list.length - files.length;
+  if (rejected > 0) {
+    toast(rejected + ' unsupported file' + (rejected > 1 ? 's' : '') + ' skipped — use PNG · JPEG · HEIC · TIFF · GIF · BMP · AVIF · WebP · SVG · ICO', 'error');
+  }
   files.forEach(addFile);
   updateButtons();
 }
 
 function addFile(file) {
-  const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
   const item = {
-    id,
+    id: uid(),
     origName: file.name,
     newName: toWebpName(file.name),
     origSize: file.size,
     file,
-    status: 'converting',
+    sourceBlob: null,
+    status: 'decoding',
     webpBlob: null,
     webpSize: 0,
     url: null,
-    previewUrl: URL.createObjectURL(file)
+    previewUrl: null,
+    detail: '',
+    note: '',
+    error: ''
   };
   items.push(item);
   render();
-  convertItem(item);
+  processItem(item);
 }
 
-async function convertItem(item) {
+async function processItem(item) {
   try {
-    const img = await loadImage(item.file);
-    const w = img.naturalWidth, h = img.naturalHeight;
-    const src = document.createElement('canvas');
-    src.width = w; src.height = h;
-    const sctx = src.getContext('2d', { willReadFrequently: true });
-    sctx.drawImage(img, 0, 0);
-    const ref = getPixels(src, w, h);
+    const sources = await decodeSource(item.file);
 
-    // Smart pass: lowest quality that still measures visually lossless = smallest file.
-    let best = null; // { q, blob, psnr }
-    for (const q of SMART_QUALITIES) {
-      const blob = await encodeCanvas(src, q);
-      const psnr = await psnrOfBlob(blob, ref, w, h);
-      if (psnr >= PSNR_THRESHOLD_DB) { best = { q, blob, psnr }; break; }
-      if (!best || blob.size < best.blob.size) best = { q, blob, psnr }; // track smallest so far
+    if (sources.length > 1) {
+      // Multi-image HEIC container → one queue item per image
+      expandItem(item, sources);
+      toast(item.origName + ' contains ' + sources.length + ' images — added ' + sources.length + ' items');
+      return;
     }
-    // Nothing hit the fidelity bar → fall back to maximum quality.
-    if (best.psnr < PSNR_THRESHOLD_DB) {
-      const blob = await encodeCanvas(src, WEBP_QUALITY);
-      best = { q: WEBP_QUALITY, blob, psnr: await psnrOfBlob(blob, ref, w, h) };
-    }
-    if (item.url) URL.revokeObjectURL(item.url);
-    item.webpBlob = best.blob;
-    item.webpSize = best.blob.size;
-    item.url = URL.createObjectURL(best.blob);
-    item.detail = 'q' + Math.round(best.q * 100) + ' · ' +
-      (isFinite(best.psnr) ? best.psnr.toFixed(1) + 'dB' : 'lossless');
-    item.status = 'done';
+
+    item.sourceBlob = sources[0].blob;
+    item.previewUrl = URL.createObjectURL(item.sourceBlob);
+    item.status = 'encoding';
+    render();
+    updateSummary();
+    await encodeItem(item);
   } catch (err) {
     console.error(err);
     item.status = 'error';
+    item.error = friendlyError(err, item);
   }
   render();
   updateButtons();
   updateSummary();
 }
 
-function encodeCanvas(canvas, q) {
-  return new Promise((res, rej) =>
-    canvas.toBlob(b => b ? res(b) : rej(new Error('conversion failed')), 'image/webp', q)
-  );
+// Replace a placeholder item with N items (one per image in the container)
+function expandItem(item, sources) {
+  const idx = items.indexOf(item);
+  const ext = extOf(item.origName) || 'heic';
+  const base = item.origName.replace(/\.[^.]+$/, '');
+  const per = Math.max(1, Math.round(item.origSize / sources.length));
+  const created = sources.map((s, i) => ({
+    id: uid(),
+    origName: base + '_' + (i + 1) + '.' + ext,
+    newName: toWebpName(base + '_' + (i + 1) + '.' + ext),
+    origSize: per,
+    file: item.file,
+    sourceBlob: s.blob,
+    status: 'encoding',
+    webpBlob: null,
+    webpSize: 0,
+    url: null,
+    previewUrl: URL.createObjectURL(s.blob),
+    detail: '',
+    note: 'image ' + (i + 1) + ' of ' + sources.length,
+    error: ''
+  }));
+  items.splice(idx, 1, ...created);
+  render();
+  updateButtons();
+  updateSummary();
+  created.forEach(it => encodeItem(it)
+    .catch(err => { console.error(err); it.status = 'error'; it.error = friendlyError(err, it); })
+    .finally(() => { render(); updateButtons(); updateSummary(); }));
+}
+
+/* ============================== smart encode ============================== */
+// Same selection logic as before — the first quality in ascending order that
+// scores PSNR >= 40 dB wins, else quality 100 — now executed in a worker pool
+// so multiple files encode in parallel and the page stays responsive.
+// The original main-thread loop is kept verbatim as the fallback.
+
+const WORKERS_OK = typeof Worker !== 'undefined' &&
+  typeof OffscreenCanvas !== 'undefined' &&
+  typeof createImageBitmap === 'function';
+let workersDisabled = false;
+const POOL_SIZE = Math.min(Math.max((navigator.hardwareConcurrency || 4) - 1, 2), 6);
+
+function sampleDims(w, h) {
+  const scale = Math.min(1, Math.sqrt(PSNR_SAMPLE_MAX / (w * h)));
+  return { sw: Math.max(1, Math.round(w * scale)), sh: Math.max(1, Math.round(h * scale)) };
+}
+
+// Reference implementation / fallback — identical to the original loop.
+async function smartEncodeLegacy(src, w, h, ref) {
+  let best = null; // { q, blob, psnr }
+  for (const q of SMART_QUALITIES) {
+    const blob = await canvasToBlob(src, 'image/webp', q);
+    const psnr = await psnrOfBlob(blob, ref, w, h);
+    if (psnr >= PSNR_THRESHOLD_DB) { best = { q, blob, psnr }; break; }
+    if (!best || blob.size < best.blob.size) best = { q, blob, psnr }; // track smallest so far
+  }
+  // Nothing hit the fidelity bar → fall back to maximum quality.
+  if (best.psnr < PSNR_THRESHOLD_DB) {
+    const blob = await canvasToBlob(src, 'image/webp', WEBP_QUALITY);
+    best = { q: WEBP_QUALITY, blob, psnr: await psnrOfBlob(blob, ref, w, h) };
+  }
+  return best;
+}
+
+async function smartEncode(src, w, h, ref) {
+  if (WORKERS_OK && !workersDisabled) {
+    try {
+      const r = await smartEncodeWorker(src, w, h, ref);
+      return { q: r.q, blob: r.blob, psnr: r.psnr };
+    } catch (err) {
+      console.warn('Worker encode unavailable — using main thread:', err);
+      workersDisabled = true;
+    }
+  }
+  return smartEncodeLegacy(src, w, h, ref);
+}
+
+async function encodeItem(item) {
+  const img = await loadImage(item.sourceBlob);
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if (!w || !h) throw new Error('decode failed');
+
+  const src = document.createElement('canvas');
+  src.width = w; src.height = h;
+  const sctx = src.getContext('2d', { willReadFrequently: true });
+  sctx.drawImage(img, 0, 0);
+  const ref = getPixels(src, w, h);
+
+  const best = await smartEncode(src, w, h, ref);
+
+  if (item.url) URL.revokeObjectURL(item.url);
+  item.webpBlob = best.blob;
+  item.webpSize = best.blob.size;
+  item.url = URL.createObjectURL(best.blob);
+  item.detail = 'q' + Math.round(best.q * 100) + ' · ' +
+    (isFinite(best.psnr) ? best.psnr.toFixed(1) + 'dB' : 'lossless') +
+    (item.note ? ' · ' + item.note : '');
+  item.status = 'done';
+}
+
+/* ---------- encode worker pool ---------- */
+
+// Runs inside a dedicated worker: draws the transferred source bitmap once,
+// then walks the exact same quality ladder as the legacy main-thread loop.
+// Multiple files are dispatched to different lanes, so batch conversions
+// encode in parallel and the page never blocks.
+const LANE_WORKER_SRC = "'use strict';\n" + `
+let enc = null, sctx = null, refData = null, dims = null;
+
+onmessage = async (e) => {
+  const m = e.data;
+  if (!m || m.cmd !== 'encode') return;
+  try {
+    dims = m;
+    enc = new OffscreenCanvas(m.w, m.h);
+    const ectx = enc.getContext('2d', { willReadFrequently: true });
+    ectx.drawImage(m.bitmap, 0, 0);
+    if (m.bitmap.close) m.bitmap.close();
+    const s = new OffscreenCanvas(m.sw, m.sh);
+    sctx = s.getContext('2d', { willReadFrequently: true });
+    refData = new Uint8ClampedArray(m.ref);
+    let best = null;
+    for (const q of m.qualities) {
+      const blob = await enc.convertToBlob({ type: 'image/webp', quality: q });
+      const psnr = await psnrOfBlob(blob);
+      if (psnr >= m.threshold) { best = { q: q, blob: blob, psnr: psnr }; break; }
+      if (!best || blob.size < best.blob.size) best = { q: q, blob: blob, psnr: psnr };
+    }
+    if (best.psnr < m.threshold) {
+      const blob = await enc.convertToBlob({ type: 'image/webp', quality: m.fallbackQuality });
+      best = { q: m.fallbackQuality, blob: blob, psnr: await psnrOfBlob(blob) };
+    }
+    postMessage({ id: m.id, ok: true, q: best.q, psnr: best.psnr, blob: best.blob });
+  } catch (err) {
+    postMessage({ id: m.id, ok: false, error: String(err && err.message || err) });
+  }
+};
+
+async function psnrOfBlob(blob) {
+  const bmp = await createImageBitmap(blob);
+  const full = new OffscreenCanvas(dims.w, dims.h);
+  const fx = full.getContext('2d', { willReadFrequently: true });
+  fx.drawImage(bmp, 0, 0);
+  if (bmp.close) bmp.close();
+  sctx.drawImage(full, 0, 0, dims.sw, dims.sh);
+  const img = sctx.getImageData(0, 0, dims.sw, dims.sh);
+  return computePSNR({ data: refData }, img);
+}
+` + `
+function computePSNR(a, b) {
+  const da = a.data, db = b.data;
+  let sum = 0;
+  for (let i = 0; i < da.length; i++) {
+    const d = da[i] - db[i];
+    sum += d * d;
+  }
+  const mse = sum / da.length;
+  if (mse === 0) return Infinity;
+  return 10 * Math.log10((255 * 255) / mse);
+}
+`;
+
+const laneBlobUrl = WORKERS_OK
+  ? URL.createObjectURL(new Blob([LANE_WORKER_SRC], { type: 'text/javascript' }))
+  : null;
+const lanes = [];
+const laneWaiters = [];
+
+function acquireLane() {
+  return new Promise((resolve, reject) => {
+    const idle = lanes.find(l => !l.busy);
+    if (idle) { idle.busy = true; return resolve(idle); }
+    if (lanes.length < POOL_SIZE) {
+      let worker;
+      try { worker = new Worker(laneBlobUrl); }
+      catch (err) { workersDisabled = true; return reject(err); }
+      const lane = { worker, busy: true, current: null };
+      worker.onmessage = e => { if (lane.current) { const done = lane.current; lane.current = null; done(e.data); } };
+      worker.onerror = () => { if (lane.current) { const done = lane.current; lane.current = null; done({ ok: false, error: 'worker error' }); } };
+      lanes.push(lane);
+      return resolve(lane);
+    }
+    laneWaiters.push(resolve);
+  });
+}
+
+function releaseLane(lane) {
+  lane.busy = false;
+  const next = laneWaiters.shift();
+  if (next) { lane.busy = true; next(lane); }
+}
+
+async function smartEncodeWorker(srcCanvas, w, h, ref) {
+  const lane = await acquireLane();
+  try {
+    return await new Promise((resolve, reject) => {
+      const id = uid();
+      createImageBitmap(srcCanvas).then(bitmap => {
+        lane.current = msg => {
+          if (msg.id !== id) return;
+          if (msg.ok) resolve(msg); else reject(new Error(msg.error || 'encode failed'));
+        };
+        const { sw, sh } = sampleDims(w, h);
+        lane.worker.postMessage({
+          cmd: 'encode', id, bitmap, w, h, sw, sh,
+          ref: ref instanceof ImageData ? ref.data : ref,  // raw pixel buffer — cloned, not transferred (fallback may still need it)
+          threshold: PSNR_THRESHOLD_DB,
+          qualities: SMART_QUALITIES,
+          fallbackQuality: WEBP_QUALITY,
+          sampleMax: PSNR_SAMPLE_MAX
+        }, [bitmap]);                            // zero-copy source transfer
+      }).catch(reject);
+    });
+  } finally {
+    releaseLane(lane);
+  }
 }
 
 // Downscaled pixel sample of a canvas (fast fidelity comparison).
 function getPixels(canvas, w, h) {
-  const scale = Math.min(1, Math.sqrt(PSNR_SAMPLE_MAX / (w * h)));
-  const sw = Math.max(1, Math.round(w * scale));
-  const sh = Math.max(1, Math.round(h * scale));
+  const { sw, sh } = sampleDims(w, h);
   const c = document.createElement('canvas');
   c.width = sw; c.height = sh;
   const ctx = c.getContext('2d', { willReadFrequently: true });
@@ -531,23 +958,17 @@ function computePSNR(a, b) {
   return 10 * Math.log10((255 * 255) / mse);
 }
 
-function loadImage(file) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read ' + file.name)); };
-    img.src = url;
-  });
-}
+/* ============================== render ============================== */
 
 function render() {
   fileList.innerHTML = '';
   if (!items.length) {
-    fileList.innerHTML = '<div class="empty">No files yet — drop PNG/JPEG files above to start smart-encoding.</div>';
+    fileList.innerHTML = '<div class="empty">' + ICON.image +
+      '<div>No files yet — drop images above to start smart-encoding.</div></div>';
     return;
   }
-  // ensure unique output names if duplicates uploaded
+
+  // ensure unique output names if duplicates added
   const seen = {};
   items.forEach(item => {
     let name = item.newName;
@@ -561,40 +982,57 @@ function render() {
 
     const card = document.createElement('div');
     card.className = 'card';
+    card.dataset.id = item.id;
     const saving = item.webpSize ? Math.round((1 - item.webpSize / item.origSize) * 100) : 0;
 
+    const thumb = item.previewUrl
+      ? '<img src="' + item.previewUrl + '" alt="preview" />'
+      : ICON.image;
+
     card.innerHTML = `
-      <img src="${item.status === 'done' ? item.url : item.previewUrl}" alt="preview" />
-      <div>
+      <div class="thumb">${thumb}</div>
+      <div class="info">
         <div class="name">${escapeHtml(item.origName)} <span class="arrow">→</span> <span class="new">${escapeHtml(item.newName)}</span></div>
         <div class="meta">${fmt(item.origSize)} → ${item.webpSize ? fmt(item.webpSize) : '…'}
           ${item.webpSize ? `<span class="save${saving < 0 ? ' larger' : ''}">${saving >= 0 ? '−' + saving + '% smaller' : '+' + Math.abs(saving) + '% larger'}</span>` : ''}
           ${item.detail ? ` · ${escapeHtml(item.detail)}` : ''}
         </div>
-        <div class="status ${item.status}">${statusText(item.status)}</div>
+        ${item.status === 'error' ? `<div class="meta" style="color:var(--danger)">${escapeHtml(item.error)}</div>` : ''}
+        <span class="chip ${item.status}">${statusChipInner(item.status)}</span>
       </div>
-      <div>
-        <button class="lime-btn btn-sm" ${item.status !== 'done' ? 'disabled' : ''} data-id="${item.id}">Download</button>
+      <div class="actions">
+        <button class="btn-icon" data-remove="${item.id}" title="Remove" aria-label="Remove ${escapeHtml(item.origName)}">${ICON.x}</button>
+        <button class="lime-btn btn-sm" ${item.status !== 'done' ? 'disabled' : ''} data-download="${item.id}">${ICON.download} Download</button>
       </div>`;
     fileList.appendChild(card);
   });
 
-  fileList.querySelectorAll('.lime-btn').forEach(btn => {
+  fileList.querySelectorAll('[data-download]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const item = items.find(i => i.id === btn.dataset.id);
+      const item = items.find(i => i.id === btn.dataset.download);
       if (item && item.webpBlob) downloadBlob(item.webpBlob, item.newName);
     });
   });
+  fileList.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => removeItem(btn.dataset.remove));
+  });
 }
 
-function statusText(s) {
-  if (s === 'converting') return '◌ Smart-encoding…';
-  if (s === 'done') return '● Done — ready';
-  return '● Failed';
+function statusChipInner(s) {
+  if (s === 'decoding') return '<span class="spin"></span> Decoding';
+  if (s === 'encoding') return '<span class="spin"></span> Smart-encoding';
+  if (s === 'done') return '<span class="dot"></span> Ready';
+  return '<span class="dot"></span> Failed';
 }
 
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function removeItem(id) {
+  const idx = items.findIndex(i => i.id === id);
+  if (idx === -1) return;
+  const item = items[idx];
+  if (item.url) URL.revokeObjectURL(item.url);
+  if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+  items.splice(idx, 1);
+  render(); updateButtons(); updateSummary();
 }
 
 function downloadBlob(blob, name) {
@@ -606,6 +1044,8 @@ function downloadBlob(blob, name) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
+/* ============================== summary / stats / paths ============================== */
+
 function updateButtons() {
   const any = items.length > 0;
   const ready = items.some(i => i.status === 'done');
@@ -615,7 +1055,7 @@ function updateButtons() {
 
 function updateSummary() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { summary.style.display = 'none'; updateStats(0,0,0); return; }
+  if (!done.length) { summary.style.display = 'none'; updatePaths(); return; }
   const tO = done.reduce((a, i) => a + i.origSize, 0);
   const tW = done.reduce((a, i) => a + i.webpSize, 0);
   const diff = tW - tO;
@@ -623,55 +1063,79 @@ function updateSummary() {
   const label = diff <= 0 ? `${pct}% smaller` : `+${pct}% larger`;
   summary.style.display = 'block';
   summary.classList.toggle('warning', diff > 0);
-  summary.innerHTML = `✅ <b class="count">${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${label}</b>` +
-    (diff > 0 ? `<div style="margin-top:6px;font-size:12px;color:var(--muted)">Note: PNG/JPEG screenshots with flat colors are often already optimal — WebP can be larger. Originals are still listed for comparison.</div>` : '');
+  summary.innerHTML = `<b class="count">${done.length}</b> file(s) converted &nbsp;·&nbsp; ${fmt(tO)} → ${fmt(tW)} &nbsp;·&nbsp; <b>${label}</b>` +
+    (diff > 0 ? `<div class="note">Note: screenshots and flat-color graphics are often already optimal — WebP can be larger. Originals are still listed for comparison.</div>` : '');
   updatePaths();
-  updateStats(done.length, tO, tW);
 }
 
-function updateStats(count, tO, tW) {
-  statFiles.textContent = count;
-  if (!count) { statSaved.textContent = '—'; return; }
-  const diff = tW - tO;
-  const pct = tO ? Math.round(Math.abs(diff) / tO * 100) : 0;
-  statSaved.textContent = diff <= 0 ? '−' + pct + '%' : '+' + pct + '%';
-  statSaved.style.color = diff <= 0 ? 'var(--lime)' : '#ff6568';
-  document.getElementById('statSavedLabel').textContent = diff <= 0 ? 'Size saved' : 'Size larger';
-}
-
-// Output paths using dynamic prefix via getOutputPath
 function updatePaths() {
   const done = items.filter(i => i.status === 'done');
-  if (!done.length) { return; }
   const pathsList = document.getElementById('pathsList');
-  if (pathsList) {
-    pathsList.textContent = done.map(i => getOutputPath(i.newName)).join('\n');
+  const copyBtn = document.getElementById('copyPathsBtn');
+  const dlAll2 = document.getElementById('downloadAllBtn2');
+  if (!pathsList) return;
+  if (!done.length) {
+    pathsList.value = '';
+    copyBtn.disabled = true;
+    copyBtn.innerHTML = ICON.copy + ' Copy paths';
+    dlAll2.disabled = true;
+    return;
+  }
+  pathsList.value = done.map(i => getOutputPath(i.newName)).join('\n');
+  copyBtn.disabled = false;
+  copyBtn.innerHTML = ICON.copy + ' Copy paths';
+  dlAll2.disabled = false;
+}
+
+document.getElementById('copyPathsBtn').addEventListener('click', () => {
+  const pathsList = document.getElementById('pathsList');
+  const copyBtn = document.getElementById('copyPathsBtn');
+  if (!pathsList.value) return;
+  const done = () => {
+    copyBtn.innerHTML = ICON.check + ' Copied!';
+    setTimeout(() => { copyBtn.innerHTML = ICON.copy + ' Copy paths'; }, 1500);
+  };
+  navigator.clipboard.writeText(pathsList.value).then(done).catch(() => {
+    pathsList.select();
+    document.execCommand('copy');
+    done();
+  });
+});
+
+/* ============================== bulk download / clear ============================== */
+
+async function downloadAll(btn) {
+  const done = items.filter(i => i.status === 'done');
+  if (!done.length) return;
+  btn.disabled = true;
+  const old = btn.innerHTML;
+  btn.innerHTML = 'Downloading…';
+  try {
+    for (const item of done) {
+      downloadBlob(item.webpBlob, item.newName);
+      await new Promise(r => setTimeout(r, 400)); // gap so browsers don't block multi-downloads
+    }
+  } finally {
+    btn.innerHTML = old;
+    updateButtons();
+    updatePaths();
   }
 }
 
-downloadAllBtn.addEventListener('click', async () => {
-  const done = items.filter(i => i.status === 'done');
-  if (!done.length) return;
-  downloadAllBtn.disabled = true;
-  downloadAllBtn.textContent = 'Downloading…';
-  try {
-    // Download each converted file individually (no zip)
-    for (const item of done) {
-      downloadBlob(item.webpBlob, item.newName);
-      await new Promise(r => setTimeout(r, 400)); // small gap so browsers don't block multi-downloads
-    }
-  } finally {
-    downloadAllBtn.textContent = '⬇ Download All';
-    updateButtons();
-  }
-});
+document.getElementById('downloadAllBtn2').addEventListener('click', e => downloadAll(e.currentTarget));
+downloadAllBtn.addEventListener('click', e => downloadAll(e.currentTarget));
 
 clearBtn.addEventListener('click', () => {
-  items.forEach(i => { if (i.url) URL.revokeObjectURL(i.url); });
+  items.forEach(i => {
+    if (i.url) URL.revokeObjectURL(i.url);
+    if (i.previewUrl) URL.revokeObjectURL(i.previewUrl);
+  });
   items = [];
   fileInput.value = '';
   render(); updateButtons(); updateSummary();
 });
+
+/* ============================== rules modal ============================== */
 
 const showRulesBtn = document.getElementById('showRulesBtn');
 const rulesModal = document.getElementById('rulesModal');
@@ -679,8 +1143,8 @@ const closeRulesBtn = document.getElementById('closeRulesBtn');
 
 showRulesBtn.addEventListener('click', () => { rulesModal.classList.toggle('open'); });
 closeRulesBtn.addEventListener('click', () => { rulesModal.classList.remove('open'); });
-rulesModal.addEventListener('click', (e) => { if (e.target === rulesModal) rulesModal.classList.remove('open'); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && rulesModal.classList.contains('open')) { rulesModal.classList.remove('open'); } });
+rulesModal.addEventListener('click', e => { if (e.target === rulesModal) rulesModal.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && rulesModal.classList.contains('open')) rulesModal.classList.remove('open'); });
 
 render();
 </script>
